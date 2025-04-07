@@ -1,0 +1,397 @@
+{
+  "info": {
+    "name": "Ingatangajah API",
+    "description": "Postman collection for testing Ingatangajah APIs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth APIs",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["register"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["login"]
+            }
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.doe@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/forgot-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["forgot-password"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Provinsi APIs",
+      "item": [
+        {
+          "name": "Create Provinsi",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Aceh\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/provinsi",
+              "host": ["{{baseUrl}}"],
+              "path": ["provinsi"]
+            }
+          }
+        },
+        {
+          "name": "Get All Provinsi",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/provinsi",
+              "host": ["{{baseUrl}}"],
+              "path": ["provinsi"]
+            }
+          }
+        },
+        {
+          "name": "Get Provinsi by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/provinsi/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["provinsi", ":id"]
+            }
+          }
+        },
+        {
+          "name": "Update Provinsi",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sumatera Utara\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/provinsi/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["provinsi", ":id"]
+            }
+          }
+        },
+        {
+          "name": "Delete Provinsi",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/provinsi/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["provinsi", ":id"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Kota/Kabupaten APIs",
+      "item": [
+        {
+          "name": "Create Kota/Kabupaten",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Banda Aceh\",\n  \"provinsi_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/kota-kabupaten",
+              "host": ["{{baseUrl}}"],
+              "path": ["kota-kabupaten"]
+            }
+          }
+        },
+        {
+          "name": "Get All Kota/Kabupaten",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/kota-kabupaten",
+              "host": ["{{baseUrl}}"],
+              "path": ["kota-kabupaten"]
+            }
+          }
+        },
+        {
+          "name": "Get Kota/Kabupaten by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/kota-kabupaten/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["kota-kabupaten", ":id"]
+            }
+          }
+        },
+        {
+          "name": "Update Kota/Kabupaten",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Langsa\",\n  \"provinsi_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/kota-kabupaten/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["kota-kabupaten", ":id"]
+            }
+          }
+        },
+        {
+          "name": "Delete Kota/Kabupaten",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/kota-kabupaten/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["kota-kabupaten", ":id"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Students APIs",
+      "item": [
+        {
+          "name": "Create Student",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Jane Doe\",\n  \"nickname\": \"Janie\",\n  \"gender\": \"Female\",\n  \"current_school\": \"Sunshine Elementary\",\n  \"phone_number\": \"123456789\",\n  \"daily_language\": \"English\",\n  \"birthdate\": \"2010-05-15\",\n  \"address\": \"123 Main St\",\n  \"city_id\": 1,\n  \"province_id\": 1,\n  \"branch_id\": \"BR001\",\n  \"parent_name\": \"John Doe\",\n  \"parent_birthdate\": \"1980-04-10\",\n  \"parent_id_number\": \"123456789\",\n  \"parent_occupation\": \"Teacher\",\n  \"parent_address\": \"123 Guardian St\",\n  \"parent_city_id\": 2,\n  \"parent_province_id\": 1,\n  \"parent_same_address\": false,\n  \"parent_source_of_info\": \"Instagram\",\n  \"users_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/students",
+              "host": ["{{baseUrl}}"],
+              "path": ["students"]
+            }
+          }
+        },
+        {
+          "name": "Get All Students",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/students",
+              "host": ["{{baseUrl}}"],
+              "path": ["students"]
+            }
+          }
+        },
+        {
+          "name": "Get Student by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/students/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["students", ":id"]
+            }
+          }
+        },
+        {
+          "name": "Update Student",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Updated Jane Doe\",\n  \"city_id\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/students/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["students", ":id"]
+            }
+          }
+        },
+        {
+          "name": "Delete Student",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/students/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["students", ":id"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Teachers APIs",
+      "item": [
+        {
+          "name": "Create Teacher",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"John Smith\",\n  \"subject\": \"Math\",\n  \"phone_number\": \"123456789\",\n  \"address\": \"456 Teacher Lane\",\n  \"city_id\": 1,\n  \"province_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/teachers",
+              "host": ["{{baseUrl}}"],
+              "path": ["teachers"]
+            }
+          }
+        },
+        {
+          "name": "Get All Teachers",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/teachers",
+              "host": ["{{baseUrl}}"],
+              "path": ["teachers"]
+            }
+          }
+        },
+        {
+          "name": "Get Teacher by ID",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/teachers/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["teachers", ":id"]
+            }
+          }
+        },
+        {
+          "name": "Update Teacher",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Updated John Smith\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/teachers/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["teachers", ":id"]
+            }
+          }
+        },
+        {
+          "name": "Delete Teacher",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{baseUrl}}/teachers/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["teachers", ":id"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
