@@ -13,7 +13,7 @@ const app = express();
 
 // Enable CORS
 app.use(cors({
-  origin: '*', // Allow all origins (Change this in production for security)
+  origin: '*',
   methods: 'GET,POST,PUT,DELETE,OPTIONS',
   allowedHeaders: 'Content-Type,Authorization'
 }));
@@ -28,17 +28,9 @@ app.use('/teachers', teachersRoutes);
 app.use('/api/kota-kabupaten', kotaKabupatenRoutes);
 app.use('/api/provinsi', provinsiRoutes);
 
-// Health check route
+// Health check
 app.get('/', (req, res) => {
   res.status(200).send('API is running with CORS enabled!');
 });
 
-// Start server only if not in a test environment
-if (process.env.NODE_ENV !== 'test') {
-  const PORT = process.env.PORT || 8080;
-  app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
-}
-
-module.exports = app;
+module.exports = app; // ❗️Hanya export app, jangan listen di sini
