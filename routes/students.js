@@ -1,85 +1,124 @@
 const express = require('express');
-const pool = require('../db');
-
 const router = express.Router();
+const pool = require('../db');
+const bcrypt = require('bcrypt');
 
-// ✅ Create Student
+// CREATE
 router.post('/', async (req, res) => {
-    try {
-        const {
-            full_name, email, birthdate, nickname, gender, current_school, phone_number, daily_language,
-            address, city_id, city_name, province_id, province_name, branch_id,
-            parent_name, parent_birthdate, parent_id_number, parent_occupation,
-            parent_address, parent_city_id, parent_city, parent_province_id, parent_province,
-            parent_same_address, parent_source_of_info
-        } = req.body;
+  try {
+    const {
+      full_name, email, birthdate, nickname, gender, current_school,
+      phone_number, daily_language, address, city_id, city_name,
+      province_id, province_name, branch_id,
+      parent_name, parent_birthdate, parent_id_number, parent_occupation,
+      parent_address, parent_city, parent_city_id,
+      parent_province, parent_province_id, parent_source_of_info
+    } = req.body;
 
-        // ✅ Fetch `city_name` and `province_name` if missing
-        let finalCityName = city_name || null;
-        let finalProvinceName = province_name || null;
-        let finalParentCityName = parent_city || null;
-        let finalParentProvinceName = parent_province || null;
+    let users_id = null;
 
-        if (!finalCityName) {
-            const cityResult = await pool.query('SELECT name FROM kota_kabupaten WHERE id = $1', [city_id]);
-            finalCityName = cityResult.rows.length ? cityResult.rows[0].name : null;
-        }
+    if (email) {
+      const userCheck = await pool.query(
+        'SELECT id FROM users WHERE email = $1',
+        [email]
+      );
 
-        if (!finalProvinceName) {
-            const provinceResult = await pool.query('SELECT name FROM provinsi WHERE id = $1', [province_id]);
-            finalProvinceName = provinceResult.rows.length ? provinceResult.rows[0].name : null;
-        }
-
-        if (!finalParentCityName) {
-            const parentCityResult = await pool.query('SELECT name FROM kota_kabupaten WHERE id = $1', [parent_city_id]);
-            finalParentCityName = parentCityResult.rows.length ? parentCityResult.rows[0].name : null;
-        }
-
-        if (!finalParentProvinceName) {
-            const parentProvinceResult = await pool.query('SELECT name FROM provinsi WHERE id = $1', [parent_province_id]);
-            finalParentProvinceName = parentProvinceResult.rows.length ? parentProvinceResult.rows[0].name : null;
-        }
-
-        // ✅ Check if user exists, create if not
-        let userId;
-        const userCheck = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
-        if (userCheck.rows.length > 0) {
-            userId = userCheck.rows[0].id;
-        } else {
-            const newUser = await pool.query(
-                `INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id`,
-                [full_name, email, birthdate.replace(/-/g, '')]
-            );
-            userId = newUser.rows[0].id;
-        }
-
-        // ✅ Insert Student
-        const result = await pool.query(
-            `INSERT INTO students (
-                full_name, birthdate, nickname, gender, current_school, phone_number, daily_language,
-                address, city_id, city_name, province_id, province_name, branch_id, parent_name, 
-                parent_birthdate, parent_id_number, parent_occupation, parent_address, parent_city_id,
-                parent_city, parent_province_id, parent_province, parent_same_address, 
-                parent_source_of_info, users_id
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, 
-                      $18, $19, $20, $21, $22, $23, $24, $25) RETURNING *`,
-            [
-                full_name, birthdate, nickname, gender, current_school, phone_number, daily_language,
-                address, city_id, finalCityName, province_id, finalProvinceName, branch_id, parent_name,
-                parent_birthdate, parent_id_number, parent_occupation, parent_address, parent_city_id,
-                finalParentCityName, parent_province_id, finalParentProvinceName, parent_same_address,
-                parent_source_of_info, userId
-            ]
+      if (userCheck.rows.length > 0) {
+        users_id = userCheck.rows[0].id;
+      } else {
+        const hashedPassword = await bcrypt.hash(
+          birthdate.split('-').reverse().join(''),
+          10
         );
-
-        res.status(201).json(result.rows[0]);
-    } catch (error) {
-        console.error('Error adding student:', error);
-        res.status(500).json({ error: error.message });
+        const newUser = await pool.query(
+          'INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id',
+          [full_name, email, hashedPassword]
+        );
+        users_id = newUser.rows[0].id;
+      }
     }
+
+    const result = await pool.query(
+      `INSERT INTO students (
+        full_name, birthdate, nickname, gender, current_school, phone_number,
+        daily_language, address, city_id, city_name, province_id, province_name,
+        branch_id, parent_name, parent_birthdate, parent_id_number, parent_occupation,
+        parent_address, parent_city, parent_city_id, parent_province,
+        parent_province_id, parent_source_of_info, users_id
+      ) VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+        $11, $12, $13, $14, $15, $16, $17, $18, $19,
+        $20, $21, $22, $23
+      ) RETURNING *`,
+      [
+        full_name, birthdate, nickname, gender, current_school, phone_number,
+        daily_language, address, city_id, city_name, province_id, province_name,
+        branch_id, parent_name, parent_birthdate, parent_id_number, parent_occupation,
+        parent_address, parent_city, parent_city_id, parent_province,
+        parent_province_id, parent_source_of_info, users_id
+      ]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error adding student:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// ✅ Read, Update, Delete follow same structure...
-// (Full CRUD operations here)
+// READ ALL
+router.get('/', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM students');
+    res.status(200).json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// READ ONE
+router.get('/:id', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM students WHERE id = $1', [req.params.id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Student not found' });
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// UPDATE
+router.put('/:id', async (req, res) => {
+  try {
+    const fields = [
+      'full_name', 'birthdate', 'nickname', 'gender', 'current_school', 'phone_number',
+      'daily_language', 'address', 'city_id', 'city_name', 'province_id', 'province_name',
+      'branch_id', 'parent_name', 'parent_birthdate', 'parent_id_number', 'parent_occupation',
+      'parent_address', 'parent_city', 'parent_city_id', 'parent_province',
+      'parent_province_id', 'parent_source_of_info'
+    ];
+    const updates = fields.map((field, i) => `${field} = $${i + 1}`).join(', ');
+    const values = fields.map(f => req.body[f]);
+
+    const result = await pool.query(
+      `UPDATE students SET ${updates} WHERE id = $${fields.length + 1} RETURNING *`,
+      [...values, req.params.id]
+    );
+
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE
+router.delete('/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM students WHERE id = $1', [req.params.id]);
+    res.status(200).json({ message: 'Student deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 module.exports = router;
