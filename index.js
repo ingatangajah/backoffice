@@ -8,6 +8,10 @@ const studentRoutes = require('./routes/students');
 const teachersRoutes = require('./routes/teachers');
 const kotaKabupatenRoutes = require('./routes/kotaKabupaten');
 const provinsiRoutes = require('./routes/provinsi');
+const articlesRoutes = require('./routes/articles');
+const programCategoriesRoutes = require('./routes/programCategories');
+const packageRoutes = require('./routes/packages');
+const classRoutes = require('./routes/classes');
 
 const app = express();
 
@@ -27,10 +31,16 @@ app.use('/students', studentRoutes);
 app.use('/teachers', teachersRoutes);
 app.use('/api/kota-kabupaten', kotaKabupatenRoutes);
 app.use('/api/provinsi', provinsiRoutes);
+app.use('/articles', articlesRoutes);
+app.use('/program-categories', programCategoriesRoutes);
+app.use('/packages', packageRoutes);
+app.use('/classes', classRoutes);
+
+
 
 // Health check
 app.get('/', (req, res) => {
   res.status(200).send('API is running with CORS enabled!');
 });
 
-module.exports = app; // ❗️Hanya export app, jangan listen di sini
+module.exports = app;
