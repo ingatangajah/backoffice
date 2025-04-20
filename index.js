@@ -12,6 +12,8 @@ const provinsiRoutes = require('./routes/provinsi');
 // const programCategoriesRoutes = require('./routes/programCategories');
 const packageRoutes = require('./routes/packages');
 const classRoutes = require('./routes/classes');
+const branchRoutes = require('./routes/branches');
+
 
 const app = express();
 
@@ -35,7 +37,7 @@ app.use('/api/provinsi', provinsiRoutes);
 // app.use('/program-categories', programCategoriesRoutes);
 app.use('/packages', packageRoutes);
 app.use('/classes', classRoutes);
-
+app.use('/branches', branchRoutes);
 
 
 // Health check
