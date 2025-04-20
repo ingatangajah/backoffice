@@ -2,14 +2,14 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 
-// CREATE Holiday
+// CREATE: Tambah holiday
 router.post('/', async (req, res) => {
-  const { holiday_name, holiday_date } = req.body;
+  const { description, holiday_date } = req.body;
 
   try {
     const result = await pool.query(
-      'INSERT INTO holidays (holiday_name, holiday_date) VALUES ($1, $2) RETURNING *',
-      [holiday_name, holiday_date]
+      'INSERT INTO holidays (description, holiday_date) VALUES ($1, $2) RETURNING *',
+      [description, holiday_date]
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -18,53 +18,57 @@ router.post('/', async (req, res) => {
   }
 });
 
-// READ All Holidays
+// READ: Ambil semua holidays
 router.get('/', async (_req, res) => {
   try {
     const result = await pool.query('SELECT * FROM holidays ORDER BY holiday_date ASC');
-    res.json(result.rows);
+    res.status(200).json(result.rows);
   } catch (error) {
     console.error('Error fetching holidays:', error);
     res.status(500).json({ error: 'Failed to fetch holidays' });
   }
 });
 
-// READ Holiday by ID
+// READ: Ambil holiday berdasarkan ID
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
+
   try {
     const result = await pool.query('SELECT * FROM holidays WHERE id = $1', [id]);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Holiday not found' });
     }
-    res.json(result.rows[0]);
+    res.status(200).json(result.rows[0]);
   } catch (error) {
     console.error('Error fetching holiday:', error);
     res.status(500).json({ error: 'Failed to fetch holiday' });
   }
 });
 
-// UPDATE Holiday
+// UPDATE: Update holiday berdasarkan ID
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
-  const { holiday_name, holiday_date } = req.body;
+  const { description, holiday_date } = req.body;
 
   try {
     const result = await pool.query(
-      'UPDATE holidays SET holiday_name = $1, holiday_date = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3 RETURNING *',
-      [holiday_name, holiday_date, id]
+      `UPDATE holidays
+       SET description = $1, holiday_date = $2, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $3
+       RETURNING *`,
+      [description, holiday_date, id]
     );
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Holiday not found' });
     }
-    res.json(result.rows[0]);
+    res.status(200).json(result.rows[0]);
   } catch (error) {
     console.error('Error updating holiday:', error);
     res.status(500).json({ error: 'Failed to update holiday' });
   }
 });
 
-// DELETE Holiday
+// DELETE: Hapus holiday
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
 
@@ -73,7 +77,7 @@ router.delete('/:id', async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Holiday not found' });
     }
-    res.json({ message: 'Holiday deleted successfully' });
+    res.status(200).json({ message: 'Holiday deleted successfully' });
   } catch (error) {
     console.error('Error deleting holiday:', error);
     res.status(500).json({ error: 'Failed to delete holiday' });
