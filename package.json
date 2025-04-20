@@ -16,12 +16,15 @@
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
-    "mysql2": "^3.11.5",
+    "pg": "^8.13.1",
     "nodemailer": "^6.9.16",
-    "pg": "^8.13.1"
+    "mysql2": "^3.11.5"
   },
   "devDependencies": {
     "jest": "^29.7.0",
     "supertest": "^7.0.0"
+  },
+  "engines": {
+    "node": "16.x"
   }
 }
