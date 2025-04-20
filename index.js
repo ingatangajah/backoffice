@@ -14,7 +14,7 @@ const packageRoutes = require('./routes/packages');
 const classRoutes = require('./routes/classes');
 const branchRoutes = require('./routes/branches');
 const enrollmentRoutes = require('./routes/enrollments');
-
+const holidaysRoutes = require('./routes/holidays');
 
 const app = express();
 
@@ -40,6 +40,7 @@ app.use('/packages', packageRoutes);
 app.use('/classes', classRoutes);
 app.use('/branches', branchRoutes);
 app.use('/enrollments', enrollmentRoutes);
+app.use('/holidays', holidaysRoutes);
 
 
 // Health check

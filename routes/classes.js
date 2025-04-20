@@ -1,39 +1,94 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const { addDurationToTime } = require('../utils/helper');
 
-// CREATE class
+// CREATE class with auto-generate schedules
 router.post('/', async (req, res) => {
-  const {
-    class_name, teacher_id, package_id, level, start_date,
-    original_end_date, real_end_date, time_start,
-    notification_time_1, notification_time_2,
-    learning_method, location, language, pic
-  } = req.body;
-
-  try {
-    const result = await pool.query(
-      `INSERT INTO classes (
-        class_name, teacher_id, package_id, level,
-        start_date, original_end_date, real_end_date,
-        time_start, notification_time_1, notification_time_2,
-        learning_method, location, language, pic
-      ) VALUES (
-        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14
-      ) RETURNING *`,
-      [
-        class_name, teacher_id, package_id, level,
-        start_date, original_end_date, real_end_date,
-        time_start, notification_time_1, notification_time_2,
-        learning_method, location, language, pic
-      ]
-    );
-    res.status(201).json(result.rows[0]);
-  } catch (error) {
-    console.error('Error creating class:', error);
-    res.status(500).json({ error: 'Failed to create class' });
-  }
-});
+    const {
+      class_name, teacher_id, package_id, level, start_date,
+      original_end_date, real_end_date, time_start,
+      notification_time_1, notification_time_2,
+      learning_method, location, language, pic
+    } = req.body;
+  
+    const client = await pool.connect();
+  
+    try {
+      await client.query('BEGIN');
+  
+      // Insert class
+      const classResult = await client.query(
+        `INSERT INTO classes (
+          class_name, teacher_id, package_id, level,
+          start_date, original_end_date, real_end_date,
+          time_start, notification_time_1, notification_time_2,
+          learning_method, location, language, pic
+        ) VALUES (
+          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14
+        ) RETURNING *`,
+        [
+          class_name, teacher_id, package_id, level,
+          start_date, original_end_date, real_end_date,
+          time_start, notification_time_1, notification_time_2,
+          learning_method, location, language, pic
+        ]
+      );
+  
+      const newClass = classResult.rows[0];
+  
+      // Get package info for credit_value
+      const packageResult = await client.query(
+        'SELECT credit_value FROM packages WHERE id = $1',
+        [package_id]
+      );
+  
+      if (packageResult.rows.length === 0) {
+        throw new Error('Package not found');
+      }
+  
+      const creditValue = packageResult.rows[0].credit_value;
+      let currentScheduleDate = new Date(start_date);
+      let createdSchedules = 0;
+  
+      while (createdSchedules < creditValue) {
+        // Cek apakah date ini adalah holiday
+        const holidayCheck = await client.query(
+          'SELECT 1 FROM holidays WHERE holiday_date = $1',
+          [currentScheduleDate.toISOString().split('T')[0]]
+        );
+  
+        if (holidayCheck.rows.length === 0) {
+          // Not a holiday -> create schedule
+          await client.query(
+            `INSERT INTO class_schedules (class_id, schedule_date, start_time, end_time)
+             VALUES ($1, $2, $3, $4)`,
+            [
+              newClass.id,
+              currentScheduleDate,
+              time_start,
+              addDurationToTime(time_start, 60) // Misal durasi meeting 1 jam
+            ]
+          );
+          createdSchedules++;
+        }
+  
+        // Increment by 7 days (next week)
+        currentScheduleDate.setDate(currentScheduleDate.getDate() + 7);
+      }
+  
+      await client.query('COMMIT');
+  
+      res.status(201).json(newClass);
+  
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.error('Error creating class and schedules:', error);
+      res.status(500).json({ error: error.message });
+    } finally {
+      client.release();
+    }
+  });
 
 // READ all classes (with JOIN info)
 router.get('/', async (_req, res) => {
