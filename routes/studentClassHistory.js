@@ -2,9 +2,9 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 
-// GET historical classes based on student_id and package_id
-router.get('/:student_id/:package_id', async (req, res) => {
-  const { student_id, package_id } = req.params;
+// GET historical classes based on student_id
+router.get('/:student_id/class-history', async (req, res) => {
+  const { student_id } = req.params;
 
   try {
     const result = await pool.query(`
@@ -20,9 +20,8 @@ router.get('/:student_id/:package_id', async (req, res) => {
       JOIN teachers ON classes.teacher_id = teachers.id
       JOIN students ON student_packages.student_id = students.id
       WHERE student_packages.student_id = $1
-        AND student_packages.package_id = $2
       ORDER BY classes.start_date ASC
-    `, [student_id, package_id]);
+    `, [student_id]);
 
     res.status(200).json(result.rows);
   } catch (error) {
