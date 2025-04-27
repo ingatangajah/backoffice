@@ -9,7 +9,8 @@ router.post('/', async (req, res) => {
     const {
       full_name, email, birthdate, nickname, gender,
       phone_number, address, city_id, city_name,
-      province_id, province_name
+      province_id, province_name, branch_id,
+      package_id, last_education_place, daily_language, join_with_ig
     } = req.body;
 
     let users_id = null;
@@ -31,16 +32,17 @@ router.post('/', async (req, res) => {
 
     const result = await pool.query(
       `INSERT INTO teachers (
-        full_name, birthdate, nickname, gender,
-        phone_number, address, city_id, city_name,
-        province_id, province_name, users_id
+        full_name, birthdate, nickname, gender, phone_number, address, city_id, city_name,
+        province_id, province_name, users_id, branch_id, package_id, last_education_place,
+        daily_language, join_with_ig
       ) VALUES (
-        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+        $11, $12, $13, $14, $15, $16
       ) RETURNING *`,
       [
-        full_name, birthdate, nickname, gender,
-        phone_number, address, city_id, city_name,
-        province_id, province_name, users_id
+        full_name, birthdate, nickname, gender, phone_number, address, city_id, city_name,
+        province_id, province_name, users_id, branch_id, package_id, last_education_place,
+        daily_language, join_with_ig
       ]
     );
 
@@ -52,11 +54,24 @@ router.post('/', async (req, res) => {
 });
 
 // READ ALL
-router.get('/', async (req, res) => {
+router.get('/', async (_req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM teachers');
+    const result = await pool.query(`
+      SELECT 
+        t.*,
+        u.email,
+        u.role,
+        b.name AS branch_name,
+        p.name AS package_name
+      FROM teachers t
+      LEFT JOIN users u ON t.users_id = u.id
+      LEFT JOIN branches b ON t.branch_id = b.id
+      LEFT JOIN packages p ON t.package_id = p.id
+      ORDER BY t.id ASC
+    `);
     res.status(200).json(result.rows);
   } catch (err) {
+    console.error('Error fetching teachers:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -68,6 +83,7 @@ router.get('/:id', async (req, res) => {
     if (result.rows.length === 0) return res.status(404).json({ error: 'Teacher not found' });
     res.status(200).json(result.rows[0]);
   } catch (err) {
+    console.error('Error fetching teacher:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -78,7 +94,8 @@ router.put('/:id', async (req, res) => {
     const fields = [
       'full_name', 'birthdate', 'nickname', 'gender',
       'phone_number', 'address', 'city_id', 'city_name',
-      'province_id', 'province_name'
+      'province_id', 'province_name', 'branch_id', 'package_id',
+      'last_education_place', 'daily_language', 'join_with_ig'
     ];
 
     const updates = fields.map((field, i) => `${field} = $${i + 1}`).join(', ');
@@ -91,6 +108,7 @@ router.put('/:id', async (req, res) => {
 
     res.status(200).json(result.rows[0]);
   } catch (err) {
+    console.error('Error updating teacher:', err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -101,6 +119,7 @@ router.delete('/:id', async (req, res) => {
     await pool.query('DELETE FROM teachers WHERE id = $1', [req.params.id]);
     res.status(200).json({ message: 'Teacher deleted successfully' });
   } catch (err) {
+    console.error('Error deleting teacher:', err);
     res.status(500).json({ error: err.message });
   }
 });
