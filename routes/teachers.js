@@ -60,7 +60,6 @@ router.get('/', async (_req, res) => {
       SELECT 
         t.*,
         u.email,
-        u.role,
         b.name AS branch_name,
         p.name AS package_name
       FROM teachers t
@@ -79,7 +78,15 @@ router.get('/', async (_req, res) => {
 // READ ONE
 router.get('/:id', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM teachers WHERE id = $1', [req.params.id]);
+    const result = await pool.query(`SELECT 
+        t.*,
+        u.email,
+        b.name AS branch_name,
+        p.name AS package_name
+      FROM teachers t
+      LEFT JOIN users u ON t.users_id = u.id
+      LEFT JOIN branches b ON t.branch_id = b.id
+      LEFT JOIN packages p ON t.package_id = p.id WHERE t.id = $1`, [req.params.id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Teacher not found' });
     res.status(200).json(result.rows[0]);
   } catch (err) {
