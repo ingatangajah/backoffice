@@ -15,11 +15,11 @@ router.get('/:student_id/class-history', async (req, res) => {
         classes.original_end_date,
         classes.real_end_date,
         teachers.full_name AS teacher_name
-      FROM student_packages
-      JOIN classes ON student_packages.class_id = classes.id
+      FROM student_enrollments
+      JOIN classes ON student_enrollments.class_id = classes.id
       JOIN teachers ON classes.teacher_id = teachers.id
-      JOIN students ON student_packages.student_id = students.id
-      WHERE student_packages.student_id = $1
+      JOIN students ON student_enrollments.student_id = students.id
+      WHERE student_enrollments.student_id = $1
       ORDER BY classes.start_date ASC
     `, [student_id]);
 
