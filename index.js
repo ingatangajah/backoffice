@@ -15,6 +15,7 @@ const classRoutes = require('./routes/classes');
 const branchRoutes = require('./routes/branches');
 const enrollmentRoutes = require('./routes/enrollments');
 const holidaysRoutes = require('./routes/holidays');
+const studentClassHistoryRoutes = require('./routes/studentClassHistory');
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.use(cors({
 
 app.use(bodyParser.json());
 
+app.use('/student-classes-history', studentClassHistoryRoutes);
 app.post('/register', register);
 app.post('/login', login);
 app.post('/forgot-password', forgotPassword);
