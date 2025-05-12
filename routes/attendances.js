@@ -32,19 +32,22 @@ router.get('/class/:class_id', async (req, res) => {
 
   try {
     const result = await pool.query(`
-      SELECT
-        s.id AS student_id,
-        s.users_id,
-        s.full_name,
-        COALESCE(p.credit_value, 0) - COUNT(a.id) AS credit_remaining
-      FROM student_enrollments se
-      JOIN students s ON se.student_id = s.id
-      LEFT JOIN classes c ON se.class_id = c.id
-      LEFT JOIN packages p ON se.package_id = p.id
-      LEFT JOIN student_attendances a ON a.student_id = s.id AND a.class_id = $1
-      WHERE se.class_id = $1
-      GROUP BY s.id, s.users_id, s.full_name, p.credit_value
-      ORDER BY s.full_name ASC;
+        SELECT
+            s.id AS student_id,
+            s.users_id,
+            s.full_name,
+            COALESCE(p.credit_value, 0) -
+            (
+                SELECT COUNT(*) 
+                FROM student_attendances a 
+                WHERE a.student_id = s.id AND a.class_id = $1
+            ) AS credit_remaining
+        FROM student_enrollments se
+        JOIN students s ON se.student_id = s.id
+        LEFT JOIN packages p ON se.package_id = p.id
+        WHERE se.class_id = $1
+        GROUP BY s.id, s.users_id, s.full_name, p.credit_value
+        ORDER BY s.full_name ASC;
     `, [class_id]);
 
     res.status(200).json(result.rows);
