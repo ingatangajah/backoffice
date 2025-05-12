@@ -69,13 +69,47 @@ router.post('/', async (req, res) => {
 
 // READ ALL
 router.get('/', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM students');
-    res.status(200).json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+    const { page = 1, limit = 10, search = '' } = req.query;
+    const offset = (page - 1) * limit;
+  
+    try {
+      const result = await pool.query(`
+        SELECT 
+          s.*,
+          b.name AS branch_name,
+          p.name AS latest_package_name,
+          p.credit_value,
+          CASE 
+            WHEN c.real_end_date < CURRENT_DATE THEN 'inactive'
+            ELSE 'active'
+          END AS status
+        FROM students s
+        LEFT JOIN branches b ON s.branch_id = b.id
+        LEFT JOIN LATERAL (
+          SELECT se.package_id, se.class_id
+          FROM student_enrollments se
+          WHERE se.student_id = s.id
+          ORDER BY se.created_at DESC
+          LIMIT 1
+        ) latest_enroll ON true
+        LEFT JOIN packages p ON p.id = latest_enroll.package_id
+        LEFT JOIN classes c ON c.id = latest_enroll.class_id
+        WHERE
+          LOWER(s.full_name) LIKE $1 OR
+          LOWER(s.nickname) LIKE $1 OR
+          LOWER(s.parent_name) LIKE $1 OR
+          s.phone_number LIKE $1
+        ORDER BY s.id
+        LIMIT $2 OFFSET $3
+      `, [`%${search.toLowerCase()}%`, limit, offset]);
+  
+      res.status(200).json(result.rows);
+    } catch (err) {
+      console.error('Error fetching students:', err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+  
 
 // READ ONE
 router.get('/:id', async (req, res) => {
