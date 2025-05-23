@@ -91,9 +91,11 @@ router.post('/', async (req, res) => {
   });
 
 // READ all classes (with JOIN info)
-router.get('/', async (_req, res) => {
+router.get('/', async (req, res) => {
+  const { package_id } = req.query;
+
   try {
-    const result = await pool.query(`
+    let query = `
       SELECT 
         c.*, 
         t.full_name AS teacher_name,
@@ -101,8 +103,17 @@ router.get('/', async (_req, res) => {
       FROM classes c
       LEFT JOIN teachers t ON c.teacher_id = t.id
       LEFT JOIN packages p ON c.package_id = p.id
-      ORDER BY c.created_at DESC
-    `);
+    `;
+    const params = [];
+
+    if (package_id) {
+      query += ` WHERE c.package_id = $1`;
+      params.push(package_id);
+    }
+
+    query += ` ORDER BY c.created_at DESC`;
+
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error) {
     console.error('Error fetching classes:', error);
