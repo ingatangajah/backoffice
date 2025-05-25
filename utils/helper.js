@@ -7,5 +7,11 @@ function addDurationToTime(startTime, durationMinutes) {
     const newMinutes = date.getMinutes().toString().padStart(2, '0');
     return `${newHours}:${newMinutes}`;
   }
+
+// Helper to format time string "HH:MM"
+function formatTime(dateObj) {
+    return dateObj.toTimeString().slice(0,5);
+  }
   
-  module.exports = { addDurationToTime };
+  
+  module.exports = { addDurationToTime, formatTime };

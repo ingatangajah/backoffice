@@ -18,6 +18,7 @@ const holidaysRoutes = require('./routes/holidays');
 const studentClassHistoryRoutes = require('./routes/studentClassHistory');
 const rolesRoutes = require('./routes/roles');
 const attendanceRoutes = require('./routes/attendances');
+const scheduleRoutes = require('./routes/schedule');
 
 const app = express();
 
@@ -47,6 +48,7 @@ app.use('/enrollments', enrollmentRoutes);
 app.use('/holidays', holidaysRoutes);
 app.use('/roles', rolesRoutes);
 app.use('/attendances', attendanceRoutes);
+app.use('/schedule', scheduleRoutes);
 
 
 // Health check
