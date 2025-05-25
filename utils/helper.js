@@ -9,9 +9,11 @@ function addDurationToTime(startTime, durationMinutes) {
   }
 
 // Helper to format time string "HH:MM"
-function formatTime(dateObj) {
-    return dateObj.toTimeString().slice(0,5);
+function formatTime(time) {
+    if (typeof time === 'string') {
+      return time.slice(0,5);
+    }
+    return time.toTimeString().slice(0,5);
   }
-  
   
   module.exports = { addDurationToTime, formatTime };

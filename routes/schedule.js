@@ -9,11 +9,11 @@ router.get('/', async (req, res) => {
   const { date } = req.query;
   if (!date) return res.status(400).json({ error: 'Missing date parameter' });
 
-  // Determine day-of-week index: Sunday=0..Saturday=6
+  // Determine day of week (0 = Sunday, ... 6 = Saturday)
   const dow = new Date(date).getDay();
 
   try {
-    // Fetch classes that occur on that day-of-week and within start and end dates
+    // Fetch classes that occur on that weekday and within start and end dates
     const result = await pool.query(
       `SELECT
          t.id AS teacher_id,
@@ -29,16 +29,16 @@ router.get('/', async (req, res) => {
       [date, dow]
     );
 
-    // Determine unique sorted time slots
+    // Unique sorted time slots
     const times = [...new Set(result.rows.map(r => r.time_start.toString()))].sort();
     const slotsTemplate = times.map(ts => {
       const [h, m] = ts.split(':');
       const start = new Date(0,0,0, +h, +m);
       const end = new Date(start.getTime() + 60 * 60 * 1000);
-      return `${formatTime(start)}-${formatTime(end)}`;
+      return `${formatTime(ts)}-${formatTime(end)}`;
     });
 
-    // Group by teacher and assign className to slots
+    // Group by teacher and fill in className for each slot
     const map = new Map();
     result.rows.forEach(row => {
       const key = row.teacher_id;
@@ -50,10 +50,11 @@ router.get('/', async (req, res) => {
         });
       }
       const entry = map.get(key);
+      const startStr = formatTime(row.time_start);
       const [h, m] = row.time_start.toString().split(':');
       const start = new Date(0,0,0, +h, +m);
       const end = new Date(start.getTime() + 60 * 60 * 1000);
-      const slotLabel = `${formatTime(row.time_start)}-${formatTime(end)}`;
+      const slotLabel = `${startStr}-${formatTime(end)}`;
       const slotObj = entry.slots.find(s => s.time === slotLabel);
       if (slotObj) slotObj.className = row.class_name;
     });
