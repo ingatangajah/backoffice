@@ -22,7 +22,10 @@ router.post('/', async (req, res) => {
 // READ All Branches
 router.get('/', async (_req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM branches ORDER BY id ASC');
+    const result = await pool.query(`SELECT b.*, kk.name AS city_name, p.name AS province_name FROM branches b 
+      LEFT JOIN kota_kabupaten kk ON b.city_id = kk.id
+      LEFT JOIN provinsi p ON b.province_id = p.id
+      ORDER BY id ASC`);
     res.status(200).json(result.rows);
   } catch (error) {
     console.error('Error fetching branches:', error);
@@ -34,7 +37,10 @@ router.get('/', async (_req, res) => {
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await pool.query('SELECT * FROM branches WHERE id = $1', [id]);
+    const result = await pool.query(`SELECT b.*, kk.name AS city_name, p.name AS province_name FROM branches b
+      LEFT JOIN kota_kabupaten kk ON b.city_id = kk.id
+      LEFT JOIN provinsi p ON b.province_id = p.id
+      WHERE id = $1`, [id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Branch not found' });
     res.status(200).json(result.rows[0]);
   } catch (error) {
