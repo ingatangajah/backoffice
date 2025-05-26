@@ -4,13 +4,13 @@ const pool = require('../db');
 
 // CREATE Branch
 router.post('/', async (req, res) => {
-  const { name, province_id, city_id } = req.body;
+  const { name, province_id, city_id, address, phone_number } = req.body;
   try {
     const result = await pool.query(
-      `INSERT INTO branches (name, province_id, city_id)
-       VALUES ($1, $2, $3)
+      `INSERT INTO branches (name, province_id, city_id, address, phone_number)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [name, province_id, city_id]
+      [name, province_id, city_id, address, phone_number]
     );
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -45,15 +45,15 @@ router.get('/:id', async (req, res) => {
 
 // UPDATE Branch
 router.put('/:id', async (req, res) => {
-  const { name, province_id, city_id } = req.body;
+  const { name, province_id, city_id, address, phone_number } = req.body;
   const { id } = req.params;
   try {
     const result = await pool.query(
       `UPDATE branches
-       SET name = $1, province_id = $2, city_id = $3, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $4
+       SET name = $1, province_id = $2, city_id = $3, city_id = $4, city_id = $5, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $6
        RETURNING *`,
-      [name, province_id, city_id, id]
+      [name, province_id, city_id, address, phone_number, id]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Branch not found' });
     res.status(200).json(result.rows[0]);
