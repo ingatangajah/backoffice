@@ -40,7 +40,7 @@ router.get('/:id', async (req, res) => {
     const result = await pool.query(`SELECT b.*, kk.name AS city_name, p.name AS province_name FROM branches b
       LEFT JOIN kota_kabupaten kk ON b.city_id = kk.id
       LEFT JOIN provinsi p ON b.province_id = p.id
-      WHERE id = $1`, [id]);
+      WHERE b.id = $1`, [id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Branch not found' });
     res.status(200).json(result.rows[0]);
   } catch (error) {
@@ -56,7 +56,7 @@ router.put('/:id', async (req, res) => {
   try {
     const result = await pool.query(
       `UPDATE branches
-       SET name = $1, province_id = $2, city_id = $3, city_id = $4, city_id = $5, updated_at = CURRENT_TIMESTAMP
+       SET name = $1, province_id = $2, city_id = $3, address = $4, phone_number = $5, updated_at = CURRENT_TIMESTAMP
        WHERE id = $6
        RETURNING *`,
       [name, province_id, city_id, address, phone_number, id]
