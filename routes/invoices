@@ -1,0 +1,101 @@
+import { generateInvoiceNumber } from '../utils/helper';
+
+const express = require('express');
+const router = express.Router();
+const pool = require('../db');
+
+// Creates a student_enrollment and its invoice in one transaction
+router.post('/', async (req, res) => {
+  const {
+    student_id,
+    package_id,
+    class_id,
+    discount_type,    // 'percent' or 'nominal', optional
+    discount_value    // numeric, optional
+  } = req.body;
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // 1. Create enrollment
+    const enrollRes = await client.query(
+      `INSERT INTO student_enrollments (student_id, package_id, class_id)
+       VALUES ($1,$2,$3) RETURNING id`,
+      [student_id, package_id, class_id]
+    );
+    const enrollment_id = enrollRes.rows[0].id;
+
+    // 2. Fetch base amount from package
+    const pkgRes = await client.query(
+      'SELECT base_price FROM packages WHERE id = $1',
+      [package_id]
+    );n    
+    if (pkgRes.rows.length === 0) {
+      throw new Error('Package not found');
+    }
+    const amount = parseFloat(pkgRes.rows[0].base_price);
+
+    // 3. Calculate total_after_discount
+    let total = amount;
+    if (discount_type === 'percent') {
+      total = amount * (100 - parseFloat(discount_value)) / 100;
+    } else if (discount_type === 'nominal') {
+      total = amount - parseFloat(discount_value);
+    }
+
+    // 4. Generate invoice number automatically
+    const invoice_number = generateInvoiceNumber();
+
+    // 5. Create invoice with status 'pending'
+    const invRes = await client.query(
+      `INSERT INTO invoices (
+         student_enrollment_id,
+         invoice_number,
+         amount,
+         discount_type,
+         discount_value,
+         total_after_discount,
+         status
+       ) VALUES ($1,$2,$3,$4,$5,$6,'pending') RETURNING *`,
+      [
+        enrollment_id,
+        invoice_number,
+        amount,
+        discount_type || null,
+        discount_value || 0,
+        total
+      ]
+    );
+
+    await client.query('COMMIT');
+    res.status(201).json({
+      enrollment: { id: enrollment_id, student_id, package_id, class_id },
+      invoice: invRes.rows[0]
+    });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Error creating enrollment & invoice:', err);
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
+// PAY Invoice
+router.post('/:id/pay', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `UPDATE invoices SET status = 'paid', updated_at = CURRENT_TIMESTAMP
+       WHERE id = $1 RETURNING *`,
+      [req.params.id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Invoice not found' });
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error marking invoice as paid:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+module.exports = router;
