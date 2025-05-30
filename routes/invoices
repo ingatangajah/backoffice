@@ -1,8 +1,7 @@
-import { generateInvoiceNumber } from '../utils/helper';
-
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const { generateInvoiceNumber } = require('../utils/helper');
 
 // Creates a student_enrollment and its invoice in one transaction
 router.post('/', async (req, res) => {
