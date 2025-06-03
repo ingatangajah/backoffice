@@ -47,7 +47,7 @@ router.get('/', async (req, res) => {
         map.set(key, {
           id: row.teacher_id,
           name: row.teacher_name,
-          slots: slotsTemplate.map(time => ({ time, className: null }))
+          slots: slotsTemplate.map(time => ({ time, className: null, classId: null }))
         });
       }
       const entry = map.get(key);
@@ -58,6 +58,7 @@ router.get('/', async (req, res) => {
       const slotLabel = `${startStr}-${formatTime(end)}`;
       const slotObj = entry.slots.find(s => s.time === slotLabel);
       if (slotObj) slotObj.className = row.class_name;
+      if (slotObj) slotObj.classId = row.class_id;
     });
 
     res.json({ date, teachers: Array.from(map.values()) });
