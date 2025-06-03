@@ -111,6 +111,7 @@ router.get('/history', async (req, res) => {
       // Fetch paginated
       const q = `
         SELECT
+          i.id,
           s.full_name AS student_name,
           p.name      AS package_name,
           CASE
