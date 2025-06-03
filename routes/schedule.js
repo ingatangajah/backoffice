@@ -19,7 +19,8 @@ router.get('/', async (req, res) => {
          t.id AS teacher_id,
          t.full_name AS teacher_name,
          c.time_start,
-         c.class_name
+         c.class_name,
+         c.id AS class_id
        FROM classes c
        JOIN teachers t ON c.teacher_id = t.id
        WHERE EXTRACT(DOW FROM c.start_date) = $2
