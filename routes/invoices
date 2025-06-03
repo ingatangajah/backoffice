@@ -1,0 +1,145 @@
+const express = require('express');
+const router = express.Router();
+const pool = require('../db');
+const { generateInvoiceNumber } = require('../utils/helper');
+
+router.post('/', async (req, res) => {
+    const {
+      student_id,
+      package_id,
+      class_id,
+      discount_type,    // 'percent' or 'nominal', optional
+      discount_value    // numeric, optional
+    } = req.body;
+  
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+  
+      // 1. Create enrollment
+      const enrollRes = await client.query(
+        `INSERT INTO student_enrollments (student_id, package_id, class_id)
+         VALUES ($1, $2, $3) RETURNING id`,
+        [student_id, package_id, class_id]
+      );
+      const enrollment_id = enrollRes.rows[0].id;
+  
+      // 2. Fetch base amount from package
+      const pkgRes = await client.query(
+        'SELECT base_price FROM packages WHERE id = $1',
+        [package_id]
+      );
+      if (pkgRes.rows.length === 0) {
+        throw new Error('Package not found');
+      }
+      const amount = parseFloat(pkgRes.rows[0].base_price);
+  
+      // 3. Calculate total_after_discount
+      let total = amount;
+      if (discount_type === 'percent') {
+        total = amount * (100 - parseFloat(discount_value)) / 100;
+      } else if (discount_type === 'nominal') {
+        total = amount - parseFloat(discount_value);
+      }
+  
+      // 4. Generate invoice number automatically
+      const invoice_number = generateInvoiceNumber();
+  
+      // 5. Create invoice with status 'pending'
+      const invRes = await client.query(
+        `INSERT INTO invoices (
+           student_enrollment_id,
+           invoice_number,
+           amount,
+           discount_type,
+           discount_value,
+           total_after_discount,
+           status
+         ) VALUES ($1, $2, $3, $4, $5, $6, 'pending') RETURNING *`,
+        [
+          enrollment_id,
+          invoice_number,
+          amount,
+          discount_type || null,
+          discount_value || 0,
+          total
+        ]
+      );
+  
+      await client.query('COMMIT');
+      res.status(201).json({
+        enrollment: { id: enrollment_id, student_id, package_id, class_id },
+        invoice: invRes.rows[0]
+      });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      console.error('Error creating enrollment & invoice:', err);
+      res.status(500).json({ error: err.message });
+    } finally {
+      client.release();
+    }
+  });
+  
+
+// PAY Invoice
+router.post('/:id/pay', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `UPDATE invoices SET status = 'paid', updated_at = CURRENT_TIMESTAMP
+       WHERE id = $1 RETURNING *`,
+      [req.params.id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Invoice not found' });
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error marking invoice as paid:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// HISTORY: GET paginated list of invoice history
+// GET /invoices/history?page=1&limit=20
+router.get('/history', async (req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
+    try {
+      // Total count
+      const countRes = await pool.query('SELECT COUNT(*) FROM invoices');
+      const totalCount = parseInt(countRes.rows[0].count, 10);
+  
+      // Fetch paginated
+      const q = `
+        SELECT
+          s.full_name AS student_name,
+          p.name      AS package_name,
+          CASE
+            WHEN i.discount_type = 'percent' THEN CONCAT(i.discount_value::text, '%')
+            WHEN i.discount_type = 'nominal' THEN CONCAT('Rp. ', i.discount_value::text)
+            ELSE '-' END AS discount,
+          i.total_after_discount AS total_invoice,
+          CASE WHEN i.status = 'paid' THEN 'Success' ELSE 'Pending' END AS payment_status
+        FROM invoices i
+        JOIN student_enrollments se ON se.id = i.student_enrollment_id
+        JOIN students s ON se.student_id = s.id
+        JOIN packages p ON se.package_id = p.id
+        ORDER BY i.created_at DESC
+        LIMIT $1 OFFSET $2
+      `;
+      const dataRes = await pool.query(q, [limit, offset]);
+  
+      res.status(200).json({
+        page,
+        limit,
+        totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+        data: dataRes.rows
+      });
+    } catch (err) {
+      console.error('Error fetching invoice history:', err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+  
+
+module.exports = router;
