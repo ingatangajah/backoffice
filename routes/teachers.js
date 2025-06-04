@@ -10,7 +10,7 @@ router.post('/', async (req, res) => {
       full_name, email, birthdate, nickname, gender,
       phone_number, address, city_id, city_name,
       province_id, province_name, branch_id,
-      package_id, last_education_place, daily_language, join_with_ig, education_level
+      package_id, last_education_place, daily_language, join_with_ig, education_level, role
     } = req.body;
 
     let users_id = null;
@@ -34,7 +34,7 @@ router.post('/', async (req, res) => {
       `INSERT INTO teachers (
         full_name, birthdate, nickname, gender, phone_number, address, city_id, city_name,
         province_id, province_name, users_id, branch_id, package_id, last_education_place,
-        daily_language, join_with_ig, education_level
+        daily_language, join_with_ig, education_level, role
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
         $11, $12, $13, $14, $15, $16, $17
@@ -42,7 +42,7 @@ router.post('/', async (req, res) => {
       [
         full_name, birthdate, nickname, gender, phone_number, address, city_id, city_name,
         province_id, province_name, users_id, branch_id, package_id, last_education_place,
-        daily_language, join_with_ig, education_level
+        daily_language, join_with_ig, education_level, role
       ]
     );
 
@@ -133,7 +133,7 @@ router.put('/:id', async (req, res) => {
       'full_name', 'birthdate', 'nickname', 'gender',
       'phone_number', 'address', 'city_id', 'city_name',
       'province_id', 'province_name', 'branch_id', 'package_id',
-      'last_education_place', 'daily_language', 'join_with_ig', 'education_level'
+      'last_education_place', 'daily_language', 'join_with_ig', 'education_level', 'role'
     ];
 
     const updates = fields.map((field, i) => `${field} = $${i + 1}`).join(', ');
