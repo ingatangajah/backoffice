@@ -12,7 +12,7 @@ router.post('/', async (req, res) => {
         province_id, province_name, branch_id,
         parent_name, parent_birthdate, parent_id_number, parent_occupation,
         parent_address, parent_city, parent_city_id,
-        parent_province, parent_province_id, parent_source_of_info, form_filler
+        parent_province, parent_province_id, parent_source_of_info, form_filler, status
       } = req.body;
   
       let users_id = null;
@@ -44,7 +44,7 @@ router.post('/', async (req, res) => {
           daily_language, address, city_id, city_name, province_id, province_name,
           branch_id, parent_name, parent_birthdate, parent_id_number, parent_occupation,
           parent_address, parent_city, parent_city_id, parent_province,
-          parent_province_id, parent_source_of_info, users_id, form_filler
+          parent_province_id, parent_source_of_info, users_id, form_filler, status
         ) VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
           $11, $12, $13, $14, $15, $16, $17, $18, $19,
@@ -55,7 +55,7 @@ router.post('/', async (req, res) => {
           daily_language, address, city_id, city_name, province_id, province_name,
           branch_id, parent_name, parent_birthdate, parent_id_number, parent_occupation,
           parent_address, parent_city, parent_city_id, parent_province,
-          parent_province_id, parent_source_of_info, users_id, form_filler
+          parent_province_id, parent_source_of_info, users_id, form_filler, status
         ]
       );
   
@@ -130,7 +130,7 @@ router.put('/:id', async (req, res) => {
       'daily_language', 'address', 'city_id', 'city_name', 'province_id', 'province_name',
       'branch_id', 'parent_name', 'parent_birthdate', 'parent_id_number', 'parent_occupation',
       'parent_address', 'parent_city', 'parent_city_id', 'parent_province',
-      'parent_province_id', 'parent_source_of_info', 'form_filler'
+      'parent_province_id', 'parent_source_of_info', 'form_filler', 'status'
     ];
     const updates = fields.map((field, i) => `${field} = $${i + 1}`).join(', ');
     const values = fields.map(f => req.body[f]);
