@@ -37,7 +37,7 @@ router.post('/', async (req, res) => {
         daily_language, join_with_ig, education_level, role
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-        $11, $12, $13, $14, $15, $16, $17
+        $11, $12, $13, $14, $15, $16, $17, $18
       ) RETURNING *`,
       [
         full_name, birthdate, nickname, gender, phone_number, address, city_id, city_name,
