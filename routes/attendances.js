@@ -36,6 +36,7 @@ router.get('/class/:class_id', async (req, res) => {
             s.id AS student_id,
             s.users_id,
             s.full_name,
+            se.id AS enrollment_id,
             COALESCE(p.credit_value, 0) -
             (
                 SELECT COUNT(*) 
