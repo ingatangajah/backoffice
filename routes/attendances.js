@@ -47,7 +47,7 @@ router.get('/class/:class_id', async (req, res) => {
         JOIN students s ON se.student_id = s.id
         LEFT JOIN packages p ON se.package_id = p.id
         WHERE se.class_id = $1
-        GROUP BY s.id, s.users_id, s.full_name, p.credit_value
+        GROUP BY s.id, s.users_id, s.full_name, p.credit_value, se.id
         ORDER BY s.full_name ASC;
     `, [class_id]);
 
