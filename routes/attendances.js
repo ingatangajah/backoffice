@@ -32,7 +32,7 @@ router.get('/class/:class_id', async (req, res) => {
 
   try {
     const result = await pool.query(`
-        SELECT
+        SELECT DISTINCT ON (s.id)
             s.id AS student_id,
             s.users_id,
             s.full_name,
@@ -48,7 +48,7 @@ router.get('/class/:class_id', async (req, res) => {
         LEFT JOIN packages p ON se.package_id = p.id
         WHERE se.class_id = $1
         GROUP BY s.id, s.users_id, s.full_name, p.credit_value, se.id
-        ORDER BY s.full_name ASC;
+        ORDER BY s.id, se.id DESC;
     `, [class_id]);
 
     res.status(200).json(result.rows);
