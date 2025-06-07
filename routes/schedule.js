@@ -18,7 +18,8 @@ router.get('/', async (req, res) => {
          t.id AS teacher_id,
          t.full_name AS teacher_name,
          c.time_start,
-         c.class_name,
+         c.id AS class_id,
+         c.class_id
          p.meeting_duration
        FROM classes c
        JOIN teachers t ON c.teacher_id = t.id
@@ -56,7 +57,7 @@ router.get('/', async (req, res) => {
         map.set(r.teacher_id, {
           id: r.teacher_id,
           name: r.teacher_name,
-          slots: slotsTemplate.map(time => ({ time, className: null }))
+          slots: slotsTemplate.map(time => ({ time, classId: null,className: null }))
         });
       }
       const entry = map.get(r.teacher_id);
@@ -69,6 +70,7 @@ router.get('/', async (req, res) => {
         const label = `${formatTime(s)}-${formatTime(e)}`;
         const slotObj = entry.slots.find(s => s.time === label);
         if (slotObj) slotObj.className = r.class_name;
+        if (slotObj) slotObj.classId = r.class_id;
       }
     });
 
