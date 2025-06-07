@@ -4,61 +4,72 @@ const router = express.Router();
 const pool = require('../db');
 const { formatTime } = require('../utils/helper');
 
-// GET /schedule?date=YYYY-MM-DD
 router.get('/', async (req, res) => {
   const { date } = req.query;
   if (!date) return res.status(400).json({ error: 'Missing date parameter' });
 
-  // Determine day of week (0 = Sunday, ... 6 = Saturday)
-  const dow = new Date(date).getDay();
-
   try {
-    // Fetch classes that occur on that weekday and within start and end dates
+    // Determine day-of-week index (0=Sun..6=Sat)
+    const dow = new Date(date).getDay();
+
+    // Fetch classes with package duration
     const result = await pool.query(
       `SELECT
          t.id AS teacher_id,
          t.full_name AS teacher_name,
          c.time_start,
          c.class_name,
-         c.id AS class_id
+         p.meeting_duration
        FROM classes c
        JOIN teachers t ON c.teacher_id = t.id
+       JOIN packages p ON c.package_id = p.id
        WHERE EXTRACT(DOW FROM c.start_date) = $2
          AND c.start_date <= $1
          AND $1 <= COALESCE(c.real_end_date, c.original_end_date)
        ORDER BY t.id, c.time_start`,
       [date, dow]
     );
+    const rows = result.rows;
 
-    // Unique sorted time slots
-    const times = [...new Set(result.rows.map(r => r.time_start.toString()))].sort();
-    const slotsTemplate = times.map(ts => {
-      const [h, m] = ts.split(':');
-      const start = new Date(0,0,0, +h, +m);
-      const end = new Date(start.getTime() + 60 * 60 * 1000);
-      return `${formatTime(ts)}-${formatTime(end)}`;
+    // Build unique slot labels at 30-min intervals
+    const slotSet = new Set();
+    rows.forEach(r => {
+      const [h, m] = r.time_start.split(':');
+      const startBase = new Date(0, 0, 0, +h, +m);
+      const count = Math.ceil(r.meeting_duration / 30);
+      for (let i = 0; i < count; i++) {
+        const s = new Date(startBase.getTime() + i * 30 * 60000);
+        const e = new Date(s.getTime() + 30 * 60000);
+        slotSet.add(`${formatTime(s)}-${formatTime(e)}`);
+      }
+    });
+    const slotsTemplate = Array.from(slotSet).sort((a, b) => {
+      const [aStart] = a.split('-');
+      const [bStart] = b.split('-');
+      return aStart.localeCompare(bStart);
     });
 
-    // Group by teacher and fill in className for each slot
+    // Group by teacher and fill slots
     const map = new Map();
-    result.rows.forEach(row => {
-      const key = row.teacher_id;
-      if (!map.has(key)) {
-        map.set(key, {
-          id: row.teacher_id,
-          name: row.teacher_name,
-          slots: slotsTemplate.map(time => ({ time, className: null, classId: null }))
+    rows.forEach(r => {
+      if (!map.has(r.teacher_id)) {
+        map.set(r.teacher_id, {
+          id: r.teacher_id,
+          name: r.teacher_name,
+          slots: slotsTemplate.map(time => ({ time, className: null }))
         });
       }
-      const entry = map.get(key);
-      const startStr = formatTime(row.time_start);
-      const [h, m] = row.time_start.toString().split(':');
-      const start = new Date(0,0,0, +h, +m);
-      const end = new Date(start.getTime() + 60 * 60 * 1000);
-      const slotLabel = `${startStr}-${formatTime(end)}`;
-      const slotObj = entry.slots.find(s => s.time === slotLabel);
-      if (slotObj) slotObj.className = row.class_name;
-      if (slotObj) slotObj.classId = row.class_id;
+      const entry = map.get(r.teacher_id);
+      const [h, m] = r.time_start.split(':');
+      const startBase = new Date(0, 0, 0, +h, +m);
+      const count = Math.ceil(r.meeting_duration / 30);
+      for (let i = 0; i < count; i++) {
+        const s = new Date(startBase.getTime() + i * 30 * 60000);
+        const e = new Date(s.getTime() + 30 * 60000);
+        const label = `${formatTime(s)}-${formatTime(e)}`;
+        const slotObj = entry.slots.find(s => s.time === label);
+        if (slotObj) slotObj.className = r.class_name;
+      }
     });
 
     res.json({ date, teachers: Array.from(map.values()) });
