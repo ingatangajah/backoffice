@@ -7,7 +7,7 @@ const { addDurationToTime } = require('../utils/helper');
 router.post('/', async (req, res) => {
     const {
       class_name, teacher_id, package_id, level, start_date,
-      original_end_date, real_end_date, time_start,
+      original_end_date, time_start,
       notification_time_1, notification_time_2,
       learning_method, location, language, pic
     } = req.body;
@@ -21,15 +21,15 @@ router.post('/', async (req, res) => {
       const classResult = await client.query(
         `INSERT INTO classes (
           class_name, teacher_id, package_id, level,
-          start_date, original_end_date, real_end_date,
+          start_date, original_end_date,
           time_start, notification_time_1, notification_time_2,
           learning_method, location, language, pic
         ) VALUES (
-          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14
+          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13
         ) RETURNING *`,
         [
           class_name, teacher_id, package_id, level,
-          start_date, original_end_date, real_end_date,
+          start_date, original_end_date,
           time_start, notification_time_1, notification_time_2,
           learning_method, location, language, pic
         ]
@@ -39,7 +39,7 @@ router.post('/', async (req, res) => {
   
       // Get package info for credit_value
       const packageResult = await client.query(
-        'SELECT credit_value FROM packages WHERE id = $1',
+        'SELECT credit_value, meeting_duration FROM packages WHERE id = $1',
         [package_id]
       );
   
@@ -48,6 +48,7 @@ router.post('/', async (req, res) => {
       }
   
       const creditValue = packageResult.rows[0].credit_value;
+      const meetingDuration = packageResult.rows[0].meeting_duration;
       let currentScheduleDate = new Date(start_date);
       let createdSchedules = 0;
   
@@ -67,7 +68,7 @@ router.post('/', async (req, res) => {
               newClass.id,
               currentScheduleDate,
               time_start,
-              addDurationToTime(time_start, 60) // Misal durasi meeting 1 jam
+              addDurationToTime(time_start, Number(meetingDuration))
             ]
           );
           createdSchedules++;
