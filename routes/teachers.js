@@ -53,69 +53,11 @@ router.post('/', async (req, res) => {
   }
 });
 
-// router.get('/', async (req, res) => {
-//     const { page = 1, limit = 10, search } = req.query;
-//     const offset = (page - 1) * limit;
-  
-//     let baseQuery = `
-//       SELECT 
-//         t.*,
-//         u.email,
-//         u.role_id,
-//         r.name AS role_name,
-//         b.name AS branch_name,
-//         p.name AS package_name
-//       FROM teachers t
-//       LEFT JOIN users u ON t.users_id = u.id
-//       LEFT JOIN roles r ON u.role_id = r.id
-//       LEFT JOIN branches b ON t.branch_id = b.id
-//       LEFT JOIN packages p ON t.package_id = p.id
-//     `;
-  
-//     let whereClause = '';
-//     let values = [];
-  
-//     if (search && search.trim() !== '') {
-//       const searchQuery = `%${search.toLowerCase()}%`;
-//       whereClause = `
-//         WHERE 
-//           LOWER(t.full_name) LIKE $1 OR
-//           LOWER(t.nickname) LIKE $1 OR
-//           LOWER(u.email) LIKE $1 OR
-//           t.phone_number LIKE $1
-//       `;
-//       values = [searchQuery, limit, offset];
-//     } else {
-//       values = [limit, offset];
-//     }
-  
-//     const finalQuery = `
-//       ${baseQuery}
-//       ${whereClause}
-//       ORDER BY t.id ASC
-//       LIMIT $${values.length - 1} OFFSET $${values.length}
-//     `;
-  
-//     try {
-//       const result = await pool.query(finalQuery, values);
-//       res.status(200).json(result.rows);
-//     } catch (err) {
-//       console.error('Error fetching teachers:', err);
-//       res.status(500).json({ error: err.message });
-//     }
-//   });
-
-// READ ALL with Pagination and Search
 router.get('/', async (req, res) => {
-  const { page = 1, limit = 10, search = '' } = req.query;
-  const pageNumber = parseInt(page, 10);
-  const limitNumber = parseInt(limit, 10);
-  const offset = (pageNumber - 1) * limitNumber;
-  const searchTerm = `%${search.toLowerCase()}%`;
-
-  try {
-    // Query untuk data teachers
-    const dataQuery = `
+    const { page = 1, limit = 10, search } = req.query;
+    const offset = (page - 1) * limit;
+  
+    let baseQuery = `
       SELECT 
         t.*,
         u.email,
@@ -128,46 +70,40 @@ router.get('/', async (req, res) => {
       LEFT JOIN roles r ON u.role_id = r.id
       LEFT JOIN branches b ON t.branch_id = b.id
       LEFT JOIN packages p ON t.package_id = p.id
-      WHERE
-        LOWER(t.full_name) LIKE $1 OR
-        LOWER(t.nickname) LIKE $1 OR
-        LOWER(u.email) LIKE $1 OR
-        t.phone_number LIKE $1
+    `;
+  
+    let whereClause = '';
+    let values = [];
+  
+    if (search && search.trim() !== '') {
+      const searchQuery = `%${search.toLowerCase()}%`;
+      whereClause = `
+        WHERE 
+          LOWER(t.full_name) LIKE $1 OR
+          LOWER(t.nickname) LIKE $1 OR
+          LOWER(u.email) LIKE $1 OR
+          t.phone_number LIKE $1
+      `;
+      values = [searchQuery, limit, offset];
+    } else {
+      values = [limit, offset];
+    }
+  
+    const finalQuery = `
+      ${baseQuery}
+      ${whereClause}
       ORDER BY t.id ASC
-      LIMIT $2 OFFSET $3
+      LIMIT $${values.length - 1} OFFSET $${values.length}
     `;
-
-    // Query untuk total count
-    const countQuery = `
-      SELECT COUNT(*) AS total
-      FROM teachers t
-      LEFT JOIN users u ON t.users_id = u.id
-      WHERE
-        LOWER(t.full_name) LIKE $1 OR
-        LOWER(t.nickname) LIKE $1 OR
-        LOWER(u.email) LIKE $1 OR
-        t.phone_number LIKE $1
-    `;
-
-    const values = [searchTerm, limitNumber, offset];
-
-    const [dataResult, countResult] = await Promise.all([
-      pool.query(dataQuery, values),
-      pool.query(countQuery, [searchTerm])
-    ]);
-
-    res.status(200).json({
-      data: dataResult.rows,
-      total: parseInt(countResult.rows[0].total, 10),
-      page: pageNumber,
-      limit: limitNumber
-    });
-  } catch (err) {
-    console.error('Error fetching teachers:', err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
+  
+    try {
+      const result = await pool.query(finalQuery, values);
+      res.status(200).json(result.rows);
+    } catch (err) {
+      console.error('Error fetching teachers:', err);
+      res.status(500).json({ error: err.message });
+    }
+  });
   
 
 // READ ONE
