@@ -46,6 +46,29 @@ router.get('/class/:classId', async (req, res) => {
   }
 });
 
+router.get('/class/:class_id/students', async (req, res) => {
+  const { class_id } = req.params;
+  try {
+    const result = await pool.query(
+      `SELECT DISTINCT ON (s.id) se.*, s.full_name AS student_name, s.gender, s.phone_number, s.current_school,
+       COALESCE(p.credit_value, 0) -
+         (SELECT COUNT(*) 
+          FROM student_attendances a 
+          WHERE a.student_id = s.id AND a.class_id = $1) AS credit_remaining
+        FROM student_enrollments se
+        JOIN students s ON se.student_id = s.id
+        LEFT JOIN packages p ON se.package_id = p.id
+        WHERE se.class_id = $1
+        ORDER BY s.id, se.id DESC`,
+      [class_id]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching students by class:', error);
+    res.status(500).json({ error: 'Failed to fetch students' });
+  }
+});
+
 // PUT - Move Student to another Class
 router.put('/:id/move', async (req, res) => {
   const { id } = req.params;
