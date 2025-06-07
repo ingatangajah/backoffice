@@ -69,11 +69,14 @@ router.post('/', async (req, res) => {
 
 // READ ALL
 router.get('/', async (req, res) => {
-    const { page = 1, limit = 10, search = '' } = req.query;
-    const offset = (page - 1) * limit;
+    const { page = 1, search = '', limit } = req.query;
+    const searchTerm = `%${search.toLowerCase()}%`;
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = limit ? parseInt(limit, 10) : null;
+    const offset = limitNumber ? (pageNumber - 1) * limitNumber : 0;
   
     try {
-      const result = await pool.query(`
+      let query = `
         SELECT 
           s.*,
           b.name AS branch_name,
@@ -99,10 +102,15 @@ router.get('/', async (req, res) => {
           LOWER(s.nickname) LIKE $1 OR
           LOWER(s.parent_name) LIKE $1 OR
           s.phone_number LIKE $1
-        ORDER BY s.id
-        LIMIT $2 OFFSET $3
-      `, [`%${search.toLowerCase()}%`, limit, offset]);
-  
+        ORDER BY s.id`;
+        
+      const values = [searchTerm];
+
+      if (limitNumber) {
+        query += ` LIMIT $2 OFFSET $3`;
+        values.push(limitNumber, offset);
+      }
+      const result = await pool.query(query, values);
       res.status(200).json(result.rows);
     } catch (err) {
       console.error('Error fetching students:', err);
