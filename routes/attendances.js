@@ -5,16 +5,16 @@ const pool = require('../db');
 
 // 1. CREATE Attendance for multiple students
 router.post('/', async (req, res) => {
-  const { class_id, student_ids } = req.body;
+  const { class_id, students } = req.body;
   const attended_date = new Date().toISOString().split('T')[0];
 
   try {
-    const insertPromises = student_ids.map(student_id =>
+    const insertPromises = students.map(({ student_id, presence }) =>
       pool.query(
-        `INSERT INTO student_attendances (student_id, class_id, attended_date)
-         VALUES ($1, $2, $3)
-         ON CONFLICT DO NOTHING`,
-        [student_id, class_id, attended_date]
+        `INSERT INTO student_attendances (student_id, class_id, attended_date, presence)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (student_id, class_id, attended_date) DO UPDATE SET presence = EXCLUDED.presence_status`,
+        [student_id, class_id, attended_date, presence]
       )
     );
 
