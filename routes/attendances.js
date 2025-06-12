@@ -13,7 +13,7 @@ router.post('/', async (req, res) => {
       pool.query(
         `INSERT INTO student_attendances (student_id, class_id, attended_date, presence)
          VALUES ($1, $2, $3, $4)
-         ON CONFLICT (student_id, class_id, attended_date) DO UPDATE SET presence = EXCLUDED.presence_status`,
+         ON CONFLICT DO NOTHING`,
         [student_id, class_id, attended_date, presence]
       )
     );
