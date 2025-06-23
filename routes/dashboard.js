@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
-const { addDurationToTime } = require('../utils/helper');
 
 router.get('/student-per-package', async (_req, res) => {
   try {
@@ -42,3 +41,4 @@ router.get('/total-active-student', async (_req, res) => {
 });
 
 
+module.exports = router;
