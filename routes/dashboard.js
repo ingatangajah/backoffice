@@ -2,12 +2,26 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 
-router.get('/student-per-package', async (_req, res) => {
+router.get('/student-per-package', async (req, res) => {
   try {
-    const result = await pool.query(`SELECT p.name AS package_name, COUNT(se.student_id) AS total_students
-                                     FROM student_enrollments se
-                                     JOIN packages p ON se.package_id = p.id
-                                     GROUP BY se.package_id, p.name;`);
+    const now = new Date();
+    const start_date = req.query.start_date || new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+    const end_date = req.query.end_date || new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
+
+    const query = `
+      SELECT 
+        p.name AS package_name, 
+        COUNT(se.student_id) AS total_students
+      FROM student_enrollments se
+      JOIN packages p ON se.package_id = p.id
+      WHERE se.created_at::date BETWEEN $1 AND $2
+      GROUP BY se.package_id, p.name
+      ORDER BY p.name ASC;
+    `;
+
+    const values = [start_date, end_date];
+    const result = await pool.query(query, values);
+
     res.status(200).json(result.rows);
   } catch (error) {
     console.error('Error fetching total student:', error);
@@ -17,17 +31,21 @@ router.get('/student-per-package', async (_req, res) => {
 
 router.get('/total-active-student', async (req, res) => {
     try {
-        const now = new Date();
-        const start_date = req.query.start_date || new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-        const end_date = req.query.end_date || new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
+        const start_date = req.query.start_date?.trim();
+        const end_date = req.query.end_date?.trim();
 
         const query = `
         SELECT COUNT(*) AS total_students
         FROM students
         WHERE status = 'ACTIVE';
         `;
-        const values = [start_date, end_date];
+        const values = [];
 
+        if (start_date && end_date) {
+            query += ` WHERE created_at::date BETWEEN $1 AND $2`;
+            values = [start_date, end_date];
+        }
+            
         const result = await pool.query(query, values);
 
         res.json({
@@ -43,8 +61,11 @@ router.get('/total-active-student', async (req, res) => {
 router.get('/total-new-student-month', async (req, res) => {
     try {
         const now = new Date();
-        const start_date = req.query.start_date || new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-        const end_date = req.query.end_date || new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
+        const start_date = (req.query.start_date && req.query.start_date.trim()) ||
+                            new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+
+        const end_date = (req.query.end_date && req.query.end_date.trim()) ||
+                          new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
 
         const query = `
         SELECT COUNT(*) AS total_students
@@ -66,20 +87,24 @@ router.get('/total-new-student-month', async (req, res) => {
 });
 router.get('/total-new-student-week', async (req, res) => {
     try {
-        const now = new Date();
-        const day = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-        const diffToMonday = day === 0 ? -6 : 1 - day;
+        let { start_date, end_date } = req.query;
 
-        const startOfWeek = new Date(now);
-        startOfWeek.setDate(now.getDate() + diffToMonday);
-        startOfWeek.setHours(0, 0, 0, 0);
+        // Jika parameter tidak dikirim, default ke minggu ini (Senin - Minggu)
+        if (!start_date || !end_date) {
+            const today = new Date();
+            const dayOfWeek = today.getDay(); // 0 = Minggu, 1 = Senin, ..., 6 = Sabtu
 
-        const endOfWeek = new Date(startOfWeek);
-        endOfWeek.setDate(startOfWeek.getDate() + 6);
-        endOfWeek.setHours(23, 59, 59, 999);
+            // Geser ke Senin (1)
+            const diffToMonday = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek); 
+            const monday = new Date(today);
+            monday.setDate(today.getDate() + diffToMonday);
 
-        const start_date = req.query.start_date || startOfWeek.toISOString().slice(0, 10);
-        const end_date = req.query.end_date || endOfWeek.toISOString().slice(0, 10);
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+
+            start_date = monday.toISOString().slice(0, 10);
+            end_date = sunday.toISOString().slice(0, 10);
+        }
 
         const query = `
         SELECT COUNT(*) AS total_students
