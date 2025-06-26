@@ -125,5 +125,64 @@ router.get('/total-new-student-week', async (req, res) => {
     }
 });
 
+router.get('/students-summary-by-month', async (req, res) => {
+  try {
+    const year = req.query.year || new Date().getFullYear();
+    const { status } = req.query;
+
+    let query = `
+      SELECT
+        TO_CHAR(s.created_at, 'Mon') AS month,
+        EXTRACT(MONTH FROM s.created_at) AS month_number,
+        COUNT(*) AS total_students
+      FROM students s
+      WHERE EXTRACT(YEAR FROM s.created_at) = $1
+    `;
+    const values = [year];
+    let idx = 2;
+
+    if (status && ['active', 'inactive'].includes(status)) {
+      query += ` AND status = $${idx++}`;
+      values.push(status);
+    }
+
+    query += ' GROUP BY month, month_number ORDER BY month_number ASC';
+
+    const result = await pool.query(query, values);
+
+    res.json({ data: result.rows });
+
+  } catch (error) {
+    console.error('Error fetching monthly summary:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+router.get('/student-per-branch', async (req, res) => {
+  try {
+    const now = new Date();
+    const start_date = req.query.start_date || new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+    const end_date = req.query.end_date || new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10);
+
+    const query = `
+        SELECT 
+            b.name AS branch_name,
+            COUNT(*) AS total_students
+        FROM student_enrollments se
+        JOIN students s ON se.student_id = s.id
+        JOIN branches b ON s.branch_id = b.id
+        WHERE se.created_at::date BETWEEN $1 AND $2
+        GROUP BY b.id, b.name
+        ORDER BY b.name ASC;
+        `;
+
+    const values = [start_date, end_date];
+    const result = await pool.query(query, values);
+
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error('Error fetching total student:', error);
+    res.status(500).json({ error: 'Failed to fetch total student' });
+  }
+});
 
 module.exports = router;
