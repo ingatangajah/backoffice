@@ -101,7 +101,8 @@ router.get('/', async (req, res) => {
           LOWER(s.full_name) LIKE $1 OR
           LOWER(s.nickname) LIKE $1 OR
           LOWER(s.parent_name) LIKE $1 OR
-          s.phone_number LIKE $1
+          s.phone_number LIKE $1 AND
+          s.deleted_at IS NULL
         ORDER BY s.id`;
         
       const values = [searchTerm];
@@ -117,7 +118,61 @@ router.get('/', async (req, res) => {
       res.status(500).json({ error: err.message });
     }
   });
+
+
+// READ ALL
+router.get('/archive-data', async (req, res) => {
+    const { page = 1, search = '', limit } = req.query;
+    const searchTerm = `%${search.toLowerCase()}%`;
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = limit ? parseInt(limit, 10) : null;
+    const offset = limitNumber ? (pageNumber - 1) * limitNumber : 0;
   
+    try {
+      let query = `
+        SELECT 
+          s.*,
+          b.name AS branch_name,
+          p.name AS latest_package_name,
+          p.credit_value,
+          CASE 
+            WHEN c.real_end_date < CURRENT_DATE THEN 'inactive'
+            ELSE 'active'
+          END AS status
+        FROM students s
+        LEFT JOIN branches b ON s.branch_id = b.id
+        LEFT JOIN LATERAL (
+          SELECT se.package_id, se.class_id
+          FROM student_enrollments se
+          WHERE se.student_id = s.id
+          ORDER BY se.created_at DESC
+          LIMIT 1
+        ) latest_enroll ON true
+        LEFT JOIN packages p ON p.id = latest_enroll.package_id
+        LEFT JOIN classes c ON c.id = latest_enroll.class_id
+        WHERE (
+          LOWER(s.full_name) LIKE $1 OR
+          LOWER(s.nickname) LIKE $1 OR
+          LOWER(s.parent_name) LIKE $1 OR
+          s.phone_number LIKE $1
+        )
+           AND s.deleted_at IS NOT NULL
+        ORDER BY s.id`;
+        
+      const values = [searchTerm];
+
+      if (limitNumber) {
+        query += ` LIMIT $2 OFFSET $3`;
+        values.push(limitNumber, offset);
+      }
+      const result = await pool.query(query, values);
+      res.status(200).json(result.rows);
+    } catch (err) {
+      console.error('Error fetching students:', err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
 
 // READ ONE
 router.get('/:id', async (req, res) => {
@@ -154,11 +209,20 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE
+// // DELETE
+// router.delete('/:id', async (req, res) => {
+//   try {
+//     await pool.query('DELETE FROM students WHERE id = $1', [req.params.id]);
+//     res.status(200).json({ message: 'Student deleted successfully' });
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// });
+// Archive
 router.delete('/:id', async (req, res) => {
   try {
-    await pool.query('DELETE FROM students WHERE id = $1', [req.params.id]);
-    res.status(200).json({ message: 'Student deleted successfully' });
+    await pool.query(`UPDATE students SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *`, [req.params.id]);
+    res.status(200).json({ message: 'Archive deleted successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
