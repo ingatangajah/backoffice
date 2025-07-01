@@ -12,7 +12,8 @@ router.post('/', async (req, res) => {
         province_id, province_name, branch_id,
         parent_name, parent_birthdate, parent_id_number, parent_occupation,
         parent_address, parent_city, parent_city_id,
-        parent_province, parent_province_id, parent_source_of_info, form_filler, status
+        parent_province, parent_province_id, parent_source_of_info, form_filler, status,
+        username_instagram, same_address, url_registration_code
       } = req.body;
   
       let users_id = null;
@@ -44,18 +45,20 @@ router.post('/', async (req, res) => {
           daily_language, address, city_id, city_name, province_id, province_name,
           branch_id, parent_name, parent_birthdate, parent_id_number, parent_occupation,
           parent_address, parent_city, parent_city_id, parent_province,
-          parent_province_id, parent_source_of_info, users_id, form_filler, status
+          parent_province_id, parent_source_of_info, users_id, form_filler, status, username_instagram,
+          parent_same_address, url_registration_code
         ) VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
           $11, $12, $13, $14, $15, $16, $17, $18, $19,
-          $20, $21, $22, $23, $24, $25, $26
+          $20, $21, $22, $23, $24, $25, $26, $27, $28, $29
         ) RETURNING *`,
         [
           full_name, birthdate, nickname, gender, current_school, phone_number,
           daily_language, address, city_id, city_name, province_id, province_name,
           branch_id, parent_name, parent_birthdate, parent_id_number, parent_occupation,
           parent_address, parent_city, parent_city_id, parent_province,
-          parent_province_id, parent_source_of_info, users_id, form_filler, status
+          parent_province_id, parent_source_of_info, users_id, form_filler, status, 
+          username_instagram, same_address, url_registration_code
         ]
       );
   
