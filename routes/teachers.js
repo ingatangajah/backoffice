@@ -10,7 +10,8 @@ router.post('/', async (req, res) => {
       full_name, email, birthdate, nickname, gender,
       phone_number, address, city_id, city_name,
       province_id, province_name, branch_id,
-      package_id, last_education_place, daily_language, join_with_ig, education_level, role
+      package_id, last_education_place, daily_language, join_with_ig, education_level, role,
+      url_registration_code
     } = req.body;
 
     let users_id = null;
@@ -34,15 +35,15 @@ router.post('/', async (req, res) => {
       `INSERT INTO teachers (
         full_name, birthdate, nickname, gender, phone_number, address, city_id, city_name,
         province_id, province_name, users_id, branch_id, package_id, last_education_place,
-        daily_language, join_with_ig, education_level, role
+        daily_language, join_with_ig, education_level, role, url_registration_code
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-        $11, $12, $13, $14, $15, $16, $17, $18
+        $11, $12, $13, $14, $15, $16, $17, $18, $19
       ) RETURNING *`,
       [
         full_name, birthdate, nickname, gender, phone_number, address, city_id, city_name,
         province_id, province_name, users_id, branch_id, package_id, last_education_place,
-        daily_language, join_with_ig, education_level, role
+        daily_language, join_with_ig, education_level, role, url_registration_code
       ]
     );
 
