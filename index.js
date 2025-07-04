@@ -21,6 +21,7 @@ const attendanceRoutes = require('./routes/attendances');
 const scheduleRoutes = require('./routes/schedule');
 const invoiceRoutes = require('./routes/invoices')
 const dashboardRoutes = require('./routes/dashboard')
+const usersRoutes = require('./routes/users')
 
 const app = express();
 
@@ -53,6 +54,7 @@ app.use('/attendances', attendanceRoutes);
 app.use('/schedule', scheduleRoutes);
 app.use('/invoices', invoiceRoutes);
 app.use('/dashboard', dashboardRoutes);
+app.use('/users', usersRoutes);
 
 // Health check
 app.get('/', (req, res) => {
