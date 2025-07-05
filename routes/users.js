@@ -36,7 +36,10 @@ router.get('/', async (_req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM users WHERE id = $1', [req.params.id]);
+    const result = await pool.query(`SELECT u.id, u.username, u.name AS full_name, u.email, u.role_id, r.name AS role_name, u.status 
+                                     FROM users u 
+                                     JOIN roles r ON u.role_id = r.id 
+                                     WHERE u.id = $1`, [req.params.id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'users not found' });
     res.json(result.rows[0]);
   } catch (error) {
@@ -52,7 +55,7 @@ router.put('/:id', async (req, res) => {
     let query = `
       UPDATE users SET
         username = $1,
-        full_name = $2,
+        name = $2,
         email = $3,
     `;
     let values = [username, full_name, email];
