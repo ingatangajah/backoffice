@@ -9,7 +9,7 @@ router.post('/', async (req, res) => {
       class_name, teacher_id, package_id, level, start_date,
       original_end_date, time_start,
       notification_time_1, notification_time_2,
-      learning_method, location, language, pic
+      learning_method, location, language, pic, enroll_students
     } = req.body;
   
     const client = await pool.connect();
@@ -76,6 +76,17 @@ router.post('/', async (req, res) => {
   
         // Increment by 7 days (next week)
         currentScheduleDate.setDate(currentScheduleDate.getDate() + 7);
+      }
+
+      if(Array.isArray(enroll_students) && enroll_students.length > 0){
+        const enrollmentPromises = enroll_students.map(student_id =>
+          client.query(
+            `INSERT INTO student_enrollments (student_id, package_id, class_id)
+            VALUES ($1, $2, $3)`,
+            [student_id, package_id, newClass.id]
+          )
+        );
+        await Promise.all(enrollmentPromises);
       }
   
       await client.query('COMMIT');
