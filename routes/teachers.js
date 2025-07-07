@@ -246,4 +246,22 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// Class List
+router.get('/:id/classes', async (req, res) => {
+  try {
+    const result = await pool.query(`SELECT
+         c.id   AS class_id,
+         c.time_start,
+         c.class_name
+       FROM teachers t
+       JOIN classes c ON c.teacher_id = t.id
+       JOIN packages p ON c.package_id = p.id
+       WHERE t.id = $1`, [req.params.id])
+    if (result.rows.length === 0) return res.status(200).json([]);
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error('Error get class of teacher:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
 module.exports = router;
