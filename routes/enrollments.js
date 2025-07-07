@@ -102,4 +102,15 @@ router.put('/:id/move', async (req, res) => {
   }
 });
 
+router.delete('/:id', async (req, res) => {
+  try {
+    const result = await pool.query('DELETE FROM student_enrollments WHERE id = $1 RETURNING *', [req.params.id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Package not found' });
+    res.json({ message: 'Package deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting package:', error);
+    res.status(500).json({ error: 'Failed to delete package' });
+  }
+});
+
 module.exports = router;
