@@ -201,4 +201,27 @@ router.get('/student-per-branch', async (req, res) => {
   }
 });
 
+router.get('/completed-levels-weekly', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT COUNT(*) AS completed_count
+      FROM student_enrollments se
+      JOIN packages p ON se.package_id = p.id
+      LEFT JOIN (
+        SELECT student_id, class_id, COUNT(*) AS total_attended
+        FROM student_attendances
+        WHERE attended_date >= date_trunc('week', CURRENT_DATE)
+        GROUP BY student_id, class_id
+      ) sa ON sa.student_id = se.student_id AND sa.class_id = se.class_id
+      WHERE COALESCE(sa.total_attended, 0) >= p.credit_value
+    `);
+
+    const count = parseInt(result.rows[0].completed_count, 10);
+    res.json({ count });
+  } catch (err) {
+    console.error('Error fetching completed levels:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;
