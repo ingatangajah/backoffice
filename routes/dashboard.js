@@ -201,25 +201,47 @@ router.get('/student-per-branch', async (req, res) => {
   }
 });
 
-router.get('/completed-levels-weekly', async (req, res) => {
+router.get('/completed-levels-daily', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT COUNT(*) AS completed_count
+      SELECT 
+        TO_CHAR(sa.attended_date, 'Day') AS day_name,
+        DATE(sa.attended_date) AS day_date,
+        COUNT(DISTINCT se.student_id) AS completed_count
       FROM student_enrollments se
       JOIN packages p ON se.package_id = p.id
-      LEFT JOIN (
-        SELECT student_id, class_id, COUNT(*) AS total_attended
-        FROM student_attendances
-        WHERE attended_date >= date_trunc('week', CURRENT_DATE)
-        GROUP BY student_id, class_id
-      ) sa ON sa.student_id = se.student_id AND sa.class_id = se.class_id
-      WHERE COALESCE(sa.total_attended, 0) >= p.credit_value
+      JOIN student_attendances sa ON sa.student_id = se.student_id AND sa.class_id = se.class_id
+      WHERE sa.attended_date >= date_trunc('week', CURRENT_DATE)
+      GROUP BY day_date, day_name, se.student_id, p.credit_value
+      HAVING COUNT(*) >= p.credit_value
     `);
 
-    const count = parseInt(result.rows[0].completed_count, 10);
-    res.json({ count });
+    // transform hasil ke label & data
+    const labelMap = {
+      Sun: 'Minggu',
+      Mon: 'Senin',
+      Tue: 'Selasa',
+      Wed: 'Rabu',
+      Thu: 'Kamis',
+      Fri: 'Jumat',
+      Sat: 'Sabtu'
+    }
+
+    // Agregasi manual karena banyak row per siswa
+    const dayCountMap = {}
+    result.rows.forEach(row => {
+      const d = new Date(row.day_date)
+      const day = d.toLocaleDateString('id-ID', { weekday: 'long' })
+      if (!dayCountMap[day]) dayCountMap[day] = 0
+      dayCountMap[day] += 1
+    })
+
+    const labels = Object.keys(dayCountMap)
+    const data = Object.values(dayCountMap)
+
+    res.json({ labels, data })
   } catch (err) {
-    console.error('Error fetching completed levels:', err);
+    console.error('Error fetching completed levels by day:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
