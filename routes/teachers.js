@@ -189,6 +189,7 @@ router.get('/:id', async (req, res) => {
         string_agg(p.name, ', ') AS package_names
       FROM teachers t
       LEFT JOIN users u ON t.users_id = u.id
+      LEFT JOIN roles r ON u.role_id = r.id
       LEFT JOIN branches b ON t.branch_id = b.id
       LEFT JOIN package_teacher pt ON pt.teacher_id = t.id
       LEFT JOIN packages p ON pt.package_id = p.id
