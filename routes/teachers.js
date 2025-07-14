@@ -70,6 +70,24 @@ router.get('/', async (req, res) => {
   const parsedPage = parseInt(page, 10);
   const offset = parsedLimit ? (parsedPage - 1) * parsedLimit : 0;
 
+  const values = [];
+  let paramIndex = 1;
+
+  let whereClause = `t.deleted_at IS NULL`;
+
+  if (search && search.trim() !== '') {
+    const searchQuery = `%${search.toLowerCase()}%`;
+    whereClause += ` AND (
+      LOWER(t.full_name) LIKE $${paramIndex} OR
+      LOWER(t.nickname) LIKE $${paramIndex} OR
+      LOWER(u.email) LIKE $${paramIndex} OR
+      t.phone_number LIKE $${paramIndex}
+    )`;
+    values.push(searchQuery);
+    paramIndex++;
+  }
+
+  // base query
   let baseQuery = `
     SELECT 
       t.*,
@@ -84,38 +102,14 @@ router.get('/', async (req, res) => {
     LEFT JOIN branches b ON t.branch_id = b.id
     LEFT JOIN package_teacher pt ON pt.teacher_id = t.id
     LEFT JOIN packages p ON pt.package_id = p.id
+    WHERE ${whereClause}
     GROUP BY t.id, u.email, u.role_id, r.name, b.name
+    ORDER BY t.id ASC
   `;
 
-  let whereClause = 'WHERE t.deleted_at IS NULL';
-  const values = [];
-  let paramIndex = 1;
-
-  if (search && search.trim() !== '') {
-    const searchQuery = `%${search.toLowerCase()}%`;
-    whereClause = `
-      WHERE 
-        LOWER(t.full_name) LIKE $${paramIndex} OR
-        LOWER(t.nickname) LIKE $${paramIndex} OR
-        LOWER(u.email) LIKE $${paramIndex} OR
-        t.phone_number LIKE $${paramIndex}
-    `;
-    values.push(searchQuery);
-    paramIndex++;
-  }
-
   if (parsedLimit !== null) {
-    baseQuery += `
-      ${whereClause}
-      ORDER BY t.id ASC
-      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
-    `;
+    baseQuery += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
     values.push(parsedLimit, offset);
-  } else {
-    baseQuery += `
-      ${whereClause}
-      ORDER BY t.id ASC
-    `;
   }
 
   try {
@@ -128,12 +122,30 @@ router.get('/', async (req, res) => {
 });
 
 router.get('/archive-data', async (req, res) => {
-  const { page = 1, search, limit } = req.query;
+const { page = 1, search, limit } = req.query;
 
   const parsedLimit = limit ? parseInt(limit, 10) : null;
   const parsedPage = parseInt(page, 10);
   const offset = parsedLimit ? (parsedPage - 1) * parsedLimit : 0;
 
+  const values = [];
+  let paramIndex = 1;
+
+  let whereClause = `t.deleted_at IS NOT NULL`;
+
+  if (search && search.trim() !== '') {
+    const searchQuery = `%${search.toLowerCase()}%`;
+    whereClause += ` AND (
+      LOWER(t.full_name) LIKE $${paramIndex} OR
+      LOWER(t.nickname) LIKE $${paramIndex} OR
+      LOWER(u.email) LIKE $${paramIndex} OR
+      t.phone_number LIKE $${paramIndex}
+    )`;
+    values.push(searchQuery);
+    paramIndex++;
+  }
+
+  // base query
   let baseQuery = `
     SELECT 
       t.*,
@@ -148,39 +160,14 @@ router.get('/archive-data', async (req, res) => {
     LEFT JOIN branches b ON t.branch_id = b.id
     LEFT JOIN package_teacher pt ON pt.teacher_id = t.id
     LEFT JOIN packages p ON pt.package_id = p.id
-    GROUP BY t.id, u.email, u.role_id, r.name, b.name;
+    WHERE ${whereClause}
+    GROUP BY t.id, u.email, u.role_id, r.name, b.name
+    ORDER BY t.id ASC
   `;
 
-  let whereClause = 'WHERE t.deleted_at IS NOT NULL';
-  const values = [];
-  let paramIndex = 1;
-
-  if (search && search.trim() !== '') {
-    const searchQuery = `%${search.toLowerCase()}%`;
-    whereClause += `
-      AND ( 
-        LOWER(t.full_name) LIKE $${paramIndex} OR
-        LOWER(t.nickname) LIKE $${paramIndex} OR
-        LOWER(u.email) LIKE $${paramIndex} OR
-        t.phone_number LIKE $${paramIndex}
-      )
-    `;
-    values.push(searchQuery);
-    paramIndex++;
-  }
-
   if (parsedLimit !== null) {
-    baseQuery += `
-      ${whereClause}
-      ORDER BY t.id ASC
-      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
-    `;
+    baseQuery += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
     values.push(parsedLimit, offset);
-  } else {
-    baseQuery += `
-      ${whereClause}
-      ORDER BY t.id ASC
-    `;
   }
 
   try {
