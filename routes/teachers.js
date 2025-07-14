@@ -77,7 +77,7 @@ router.get('/', async (req, res) => {
       u.role_id,
       r.name AS role_name,
       b.name AS branch_name,
-      GROUP_CONCAT(p.name SEPARATOR ', ') AS package_names
+      string_agg(p.name, ', ') AS package_names
     FROM teachers t
     LEFT JOIN users u ON t.users_id = u.id
     LEFT JOIN roles r ON u.role_id = r.id
@@ -141,7 +141,7 @@ router.get('/archive-data', async (req, res) => {
       u.role_id,
       r.name AS role_name,
       b.name AS branch_name,
-      GROUP_CONCAT(p.name SEPARATOR ', ') AS package_names
+      string_agg(p.name, ', ') AS package_names
     FROM teachers t
     LEFT JOIN users u ON t.users_id = u.id
     LEFT JOIN roles r ON u.role_id = r.id
@@ -199,7 +199,7 @@ router.get('/:id', async (req, res) => {
         t.*,
         u.email,
         b.name AS branch_name,
-        GROUP_CONCAT(p.name SEPARATOR ', ') AS package_names
+        string_agg(p.name, ', ') AS package_names
       FROM teachers t
       LEFT JOIN users u ON t.users_id = u.id
       LEFT JOIN branches b ON t.branch_id = b.id
