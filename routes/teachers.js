@@ -84,7 +84,7 @@ router.get('/', async (req, res) => {
     LEFT JOIN branches b ON t.branch_id = b.id
     LEFT JOIN package_teacher pt ON pt.teacher_id = t.id
     LEFT JOIN packages p ON pt.package_id = p.id
-    GROUP BY t.id
+    GROUP BY t.id, u.email, u.role_id, r.name, b.name
   `;
 
   let whereClause = 'WHERE t.deleted_at IS NULL';
@@ -148,7 +148,7 @@ router.get('/archive-data', async (req, res) => {
     LEFT JOIN branches b ON t.branch_id = b.id
     LEFT JOIN package_teacher pt ON pt.teacher_id = t.id
     LEFT JOIN packages p ON pt.package_id = p.id
-    GROUP BY t.id;
+    GROUP BY t.id, u.email, u.role_id, r.name, b.name;
   `;
 
   let whereClause = 'WHERE t.deleted_at IS NOT NULL';
@@ -206,7 +206,7 @@ router.get('/:id', async (req, res) => {
       LEFT JOIN package_teacher pt ON pt.teacher_id = t.id
       LEFT JOIN packages p ON pt.package_id = p.id
       WHERE t.id = $1
-      GROUP BY t.id;`, [req.params.id]);
+      GROUP BY t.id, u.email, u.role_id, r.name, b.name;`, [req.params.id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Teacher not found' });
     res.status(200).json(result.rows[0]);
   } catch (err) {
