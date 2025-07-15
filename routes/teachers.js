@@ -196,6 +196,7 @@ router.get('/:id', async (req, res) => {
         t.*,
         u.email,
         string_agg(b.name, ', ') AS branch_names,
+        string_agg(b.id, ', ') AS branch_ids,
         string_agg(p.name, ', ') AS package_names
       FROM teachers t
       LEFT JOIN users u ON t.users_id = u.id
