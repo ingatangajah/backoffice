@@ -8,8 +8,7 @@ router.post('/', async (req, res) => {
   try {
     const {
       full_name, email, birthdate, nickname, gender,
-      phone_number, address, city_id, city_name,
-      province_id, province_name, branch_ids,
+      phone_number, address, branch_ids,
       package_ids, last_education_place, daily_language, join_with_ig, education_level, role,
       url_registration_code
     } = req.body;
@@ -33,16 +32,14 @@ router.post('/', async (req, res) => {
 
     const result = await pool.query(
       `INSERT INTO teachers (
-        full_name, birthdate, nickname, gender, phone_number, address, city_id, city_name,
-        province_id, province_name, users_id, last_education_place,
+        full_name, birthdate, nickname, gender, phone_number, address, users_id, last_education_place,
         daily_language, join_with_ig, education_level, role, url_registration_code
       ) VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-        $11, $12, $13, $14, $15, $16, $17
+        $11, $12, $13
       ) RETURNING *`,
       [
-        full_name, birthdate, nickname, gender, phone_number, address, city_id, city_name,
-        province_id, province_name, users_id, last_education_place,
+        full_name, birthdate, nickname, gender, phone_number, address, users_id, last_education_place,
         daily_language, join_with_ig, education_level, role, url_registration_code
       ]
     );
@@ -58,9 +55,9 @@ router.post('/', async (req, res) => {
 
     // Insert ke branch_teacher
     if (branch_ids && branch_ids.length > 0) {
-      const insertValues = package_ids.map((pkgId) => `(${teacher.id}, ${pkgId})`).join(',');
+      const insertValues = branch_ids.map((brcId) => `(${teacher.id}, ${brcId})`).join(',');
       await pool.query(
-        `INSERT INTO package_teacher (teacher_id, package_id) VALUES ${insertValues}`
+        `INSERT INTO branch_teacher (teacher_id, branch_id) VALUES ${insertValues}`
       );
     }
     res.status(201).json(teacher);
@@ -220,9 +217,7 @@ router.put('/:id', async (req, res) => {
   try {
     const {
       full_name, birthdate, nickname, gender,
-      phone_number, address, city_id, city_name,
-      province_id, province_name, branch_id,
-      package_ids,
+      phone_number, address, branch_ids,package_ids,
       last_education_place, daily_language, join_with_ig, education_level, role,
       url_registration_code
     } = req.body;
@@ -232,15 +227,13 @@ router.put('/:id', async (req, res) => {
     await pool.query(
       `UPDATE teachers SET
         full_name = $1, birthdate = $2, nickname = $3, gender = $4,
-        phone_number = $5, address = $6, city_id = $7, city_name = $8,
-        province_id = $9, province_name = $10, branch_id = $11,
-        last_education_place = $12, daily_language = $13, join_with_ig = $14,
-        education_level = $15, role = $16, url_registration_code = $17
-      WHERE id = $18`,
+        phone_number = $5, address = $6,
+        last_education_place = $7, daily_language = $8, join_with_ig = $9,
+        education_level = $10, role = $11, url_registration_code = $12
+      WHERE id = $13`,
       [
         full_name, birthdate, nickname, gender,
-        phone_number, address, city_id, city_name,
-        province_id, province_name, branch_id,
+        phone_number, address,
         last_education_place, daily_language, join_with_ig,
         education_level, role, url_registration_code,
         teacherId
@@ -248,12 +241,19 @@ router.put('/:id', async (req, res) => {
     );
 
     // Update package_teacher
-    await pool.query('DELETE FROM package_teacher WHERE teacher_id = $1', [teacherId]);
-
     if (package_ids && package_ids.length > 0) {
+      await pool.query('DELETE FROM package_teacher WHERE teacher_id = $1', [teacherId]);
       const insertValues = package_ids.map((pkgId) => `(${teacherId}, ${pkgId})`).join(',');
       await pool.query(
         `INSERT INTO package_teacher (teacher_id, package_id) VALUES ${insertValues}`
+      );
+    }
+    // Update branch_teacher
+    if (branch_ids && branch_ids.length > 0) {
+      await pool.query('DELETE FROM package_teacher WHERE teacher_id = $1', [teacherId]);
+      const insertValues = branch_ids.map((brcId) => `(${teacherId}, ${brcId})`).join(',');
+      await pool.query(
+        `INSERT INTO branch_teacher (teacher_id, branch_id) VALUES ${insertValues}`
       );
     }
 
