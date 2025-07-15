@@ -196,7 +196,7 @@ router.get('/:id', async (req, res) => {
         t.*,
         u.email,
         string_agg(b.name, ', ') AS branch_names,
-        string_agg(b.id, ', ') AS branch_ids,
+        string_agg(b.id::text, ', ') AS branch_ids,
         string_agg(p.name, ', ') AS package_names
       FROM teachers t
       LEFT JOIN users u ON t.users_id = u.id
@@ -206,7 +206,7 @@ router.get('/:id', async (req, res) => {
       LEFT JOIN package_teacher pt ON pt.teacher_id = t.id
       LEFT JOIN packages p ON pt.package_id = p.id
       WHERE t.id = $1
-      GROUP BY t.id, u.email, u.role_id, r.name, b.name`, [req.params.id]);
+      GROUP BY t.id, u.email, u.role_id, r.name`, [req.params.id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Teacher not found' });
     res.status(200).json(result.rows[0]);
   } catch (err) {
