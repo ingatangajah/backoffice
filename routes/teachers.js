@@ -216,11 +216,28 @@ router.get('/:id', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const {
-      full_name, birthdate, nickname, gender,
+      full_name, birthdate, nickname, gender, email,
       phone_number, address, branch_ids,package_ids,
       last_education_place, daily_language, join_with_ig, education_level, role,
       url_registration_code
     } = req.body;
+
+    let users_id = null;
+
+    if (email) {
+      const existingUser = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+
+      if (existingUser.rows.length > 0) {
+        users_id = existingUser.rows[0].id;
+      } else {
+        const password = await bcrypt.hash(birthdate.split('-').reverse().join(''), 10);
+        const newUser = await pool.query(
+          'INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id',
+          [full_name, email, password]
+        );
+        users_id = newUser.rows[0].id;
+      }
+    }
 
     const teacherId = req.params.id;
 
@@ -229,13 +246,13 @@ router.put('/:id', async (req, res) => {
         full_name = $1, birthdate = $2, nickname = $3, gender = $4,
         phone_number = $5, address = $6,
         last_education_place = $7, daily_language = $8, join_with_ig = $9,
-        education_level = $10, role = $11, url_registration_code = $12
-      WHERE id = $13`,
+        education_level = $10, role = $11, url_registration_code = $12, users_id = $13
+      WHERE id = $14`,
       [
         full_name, birthdate, nickname, gender,
         phone_number, address,
         last_education_place, daily_language, join_with_ig,
-        education_level, role, url_registration_code,
+        education_level, role, url_registration_code, users_id,
         teacherId
       ]
     );
