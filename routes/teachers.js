@@ -250,7 +250,7 @@ router.put('/:id', async (req, res) => {
     }
     // Update branch_teacher
     if (branch_ids && branch_ids.length > 0) {
-      await pool.query('DELETE FROM package_teacher WHERE teacher_id = $1', [teacherId]);
+      await pool.query('DELETE FROM branch_teacher WHERE teacher_id = $1', [teacherId]);
       const insertValues = branch_ids.map((brcId) => `(${teacherId}, ${brcId})`).join(',');
       await pool.query(
         `INSERT INTO branch_teacher (teacher_id, branch_id) VALUES ${insertValues}`
