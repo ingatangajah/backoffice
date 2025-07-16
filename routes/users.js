@@ -34,6 +34,20 @@ router.get('/', async (_req, res) => {
   }
 });
 
+router.get('/admin', async (_req, res) => {
+  try {
+    const result = await pool.query(`SELECT u.id, u.username, u.name AS full_name, u.email, r.name AS role_name, u.status 
+        FROM users u 
+        JOIN roles r ON u.role_id = r.id
+        WHERE deleted_at IS NULL AND role_id = 1
+        ORDER BY u.created_at ASC`);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
 router.get('/:id', async (req, res) => {
   try {
     const result = await pool.query(`SELECT u.id, u.username, u.name AS full_name, u.email, u.role_id, r.name AS role_name, u.status 
