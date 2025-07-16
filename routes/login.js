@@ -20,8 +20,8 @@ const login = async (req, res) => {
       return res.status(401).send({ error: 'Invalid email or password' });
     }
 
-    const token = generateToken({ id: user.id, email: user.email });
-    res.status(200).send({ token });
+    const token = generateToken({ id: user.id, email: user.email, role_id: user.role_id });
+    res.status(200).send({ token, role_id: user.role_id });
   } catch (error) {
     res.status(500).send({ error: error.message });
   }
