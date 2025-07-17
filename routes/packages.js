@@ -23,7 +23,18 @@ router.post('/', async (req, res) => {
 // READ all packages
 router.get('/', async (_req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM packages ORDER BY created_at DESC');
+    const result = await pool.query('SELECT * FROM packages WHERE packages.deleted_at IS NULL ORDER BY created_at DESC');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching packages:', error);
+    res.status(500).json({ error: 'Failed to fetch packages' });
+  }
+});
+
+// READ all packages
+router.get('/archive-data', async (_req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM packages WHERE packages.deleted_at IS NOT NULL ORDER BY created_at DESC');
     res.json(result.rows);
   } catch (error) {
     console.error('Error fetching packages:', error);
@@ -64,14 +75,23 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE package
+// router.delete('/:id', async (req, res) => {
+//   try {
+//     const result = await pool.query('DELETE FROM packages WHERE id = $1 RETURNING *', [req.params.id]);
+//     if (result.rows.length === 0) return res.status(404).json({ error: 'Package not found' });
+//     res.json({ message: 'Package deleted successfully' });
+//   } catch (error) {
+//     console.error('Error deleting package:', error);
+//     res.status(500).json({ error: 'Failed to delete package' });
+//   }
+// });
+// Archive
 router.delete('/:id', async (req, res) => {
   try {
-    const result = await pool.query('DELETE FROM packages WHERE id = $1 RETURNING *', [req.params.id]);
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Package not found' });
-    res.json({ message: 'Package deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting package:', error);
-    res.status(500).json({ error: 'Failed to delete package' });
+    await pool.query(`UPDATE packages SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *`, [req.params.id]);
+    res.status(200).json({ message: 'Archive Package successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

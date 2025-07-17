@@ -225,7 +225,7 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     await pool.query(`UPDATE students SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *`, [req.params.id]);
-    res.status(200).json({ message: 'Archive deleted successfully' });
+    res.status(200).json({ message: 'Archive Student successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
