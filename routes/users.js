@@ -34,6 +34,20 @@ router.get('/', async (_req, res) => {
   }
 });
 
+router.get('/archive-data', async (_req, res) => {
+  try {
+    const result = await pool.query(`SELECT u.id, u.username, u.name AS full_name, u.email, r.name AS role_name, u.status 
+        FROM users u 
+        JOIN roles r ON u.role_id = r.id
+        WHERE deleted_at IS NOT NULL AND role_id IN (1,4)
+        ORDER BY u.created_at ASC`);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
 router.get('/admin', async (_req, res) => {
   try {
     const result = await pool.query(`SELECT u.id, u.username, u.name AS full_name, u.email, r.name AS role_name, u.status 
@@ -109,7 +123,7 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     await pool.query(`UPDATE users SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *`, [req.params.id]);
-    res.status(200).json({ message: 'Archive deleted successfully' });
+    res.status(200).json({ message: 'Archive user successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
