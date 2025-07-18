@@ -179,9 +179,9 @@ router.get('/student-per-branch', async (req, res) => {
       SELECT 
         b.name AS branch_name,
         COUNT(*) AS total_students
-      FROM student_enrollments se
-      JOIN students s ON se.student_id = s.id
+      FROM students s
       JOIN branches b ON s.branch_id = b.id
+      GROUP BY b.name
     `;
     const values = [];
 
