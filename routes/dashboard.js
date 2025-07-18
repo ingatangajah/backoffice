@@ -178,19 +178,18 @@ router.get('/student-per-branch', async (req, res) => {
     let query = `
       SELECT 
         b.name AS branch_name,
-        COUNT(*) AS total_students
+        COUNT(s.id) AS total_students
       FROM students s
       JOIN branches b ON s.branch_id = b.id
-      GROUP BY b.name
     `;
     const values = [];
 
     if (isValidDateRange(start_date, end_date)) {
-      query += ` WHERE se.created_at::date BETWEEN $1 AND $2`;
+      query += ` WHERE s.created_at::date BETWEEN $1 AND $2`;
       values.push(start_date, end_date);
     }
 
-    query += ` GROUP BY b.id, b.name ORDER BY b.name ASC`;
+    query += ` GROUP BY b.name ORDER BY b.name ASC`;
 
     const result = await pool.query(query, values);
 
