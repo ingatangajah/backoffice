@@ -9,7 +9,9 @@ router.post('/', async (req, res) => {
       package_id,
       class_id,
       discount_type,    // 'percent' or 'nominal', optional
-      discount_value    // numeric, optional
+      discount_value,    // numeric, optional
+      document_link,
+      payment_type
     } = req.body;
   
     const client = await pool.connect();
@@ -54,15 +56,19 @@ router.post('/', async (req, res) => {
            discount_type,
            discount_value,
            total_after_discount,
-           status
-         ) VALUES ($1, $2, $3, $4, $5, $6, 'pending') RETURNING *`,
+           status,
+           payment_document_link,
+           payment_type
+         ) VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8) RETURNING *`,
         [
           enrollment_id,
           invoice_number,
           amount,
           discount_type || null,
           discount_value || 0,
-          total
+          total,
+          document_link,
+          payment_type
         ]
       );
   
