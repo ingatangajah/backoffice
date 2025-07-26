@@ -122,6 +122,8 @@ router.get('/history', async (req, res) => {
         i.id,
         s.full_name AS student_name,
         p.name      AS package_name,
+        i.invoice_number AS invoice_number,
+        i.payment_type AS payment_type,
         CASE
           WHEN i.discount_type = 'percent' THEN CONCAT(i.discount_value::text, '%')
           WHEN i.discount_type = 'nominal' THEN CONCAT('Rp. ', i.discount_value::text)
