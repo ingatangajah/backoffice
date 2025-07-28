@@ -180,7 +180,6 @@ router.get('/:id', async (req, res) => {
       JOIN student_enrollments se ON se.id = i.student_enrollment_id
       JOIN students s ON se.student_id = s.id
       JOIN packages p ON se.package_id = p.id
-      ORDER BY i.created_at DESC
       WHERE i.id = $1`, [id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Invoice not found' });
     res.status(200).json(result.rows[0]);
