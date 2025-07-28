@@ -195,7 +195,7 @@ router.put('/:id', async (req, res) => {
   try {
     const result = await pool.query(
       `UPDATE invoices
-       SET payment_status = $1, payment_document_link = $2, payment_type = $3, updated_at = CURRENT_TIMESTAMP
+       SET status = $1, payment_document_link = $2, payment_type = $3, updated_at = CURRENT_TIMESTAMP
        WHERE id = $4
        RETURNING *`,
       [payment_status, document_link, payment_type, id]
