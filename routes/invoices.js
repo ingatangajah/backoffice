@@ -187,9 +187,27 @@ router.get('/:id', async (req, res) => {
     console.error('Error fetching invoice:', error);
     res.status(500).json({ error: 'Failed to fetch invoice' });
   }
-
 })
-  
+
+router.put('/:id', async (req, res) => {
+  const { payment_status, document_link, payment_type } = req.body;
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      `UPDATE invoices
+       SET payment_status = $1, payment_document_link = $2, payment_type = $3, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $4
+       RETURNING *`,
+      [payment_status, document_link, payment_type, id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Invoice not found' });
+    res.status(200).json(result.rows[0]);
+  } catch (error) {
+    console.error('Error updating invoice:', error);
+    res.status(500).json({ error: 'Failed to update invoice' });
+  }
+});
+
 // DELETE Invoice
 router.delete('/:id', async (req, res) => {
   try {
