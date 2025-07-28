@@ -159,6 +159,48 @@ router.get('/history', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+router.get('/:id', async (req, res) => {
+  const { id } = req.params;
+    try {
+    const result = await pool.query(`SELECT
+        i.id,
+        s.full_name AS student_name,
+        p.name      AS package_name,
+        i.invoice_number AS invoice_number,
+        i.payment_type AS payment_type,
+        i.payment_document_link AS payment_document_link,
+        CASE
+          WHEN i.discount_type = 'percent' THEN CONCAT(i.discount_value::text, '%')
+          WHEN i.discount_type = 'nominal' THEN CONCAT('Rp. ', i.discount_value::text)
+          ELSE '-' END AS discount,
+        i.total_after_discount AS total_invoice,
+        CASE WHEN i.status = 'paid' THEN 'Success' ELSE 'Pending' END AS payment_status
+      FROM invoices i
+      JOIN student_enrollments se ON se.id = i.student_enrollment_id
+      JOIN students s ON se.student_id = s.id
+      JOIN packages p ON se.package_id = p.id
+      ORDER BY i.created_at DESC
+      WHERE i.id = $1`, [id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Invoice not found' });
+    res.status(200).json(result.rows[0]);
+  } catch (error) {
+    console.error('Error fetching invoice:', error);
+    res.status(500).json({ error: 'Failed to fetch invoice' });
+  }
+
+})
   
+// DELETE Invoice
+router.delete('/:id', async (req, res) => {
+  try {
+    const result = await pool.query('DELETE FROM invoices WHERE id = $1 RETURNING *', [req.params.id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Invoice not found' });
+    res.json({ message: 'Package deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting invoice:', error);
+    res.status(500).json({ error: 'Failed to delete invoice' });
+  }
+});
 
 module.exports = router;
