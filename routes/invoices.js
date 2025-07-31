@@ -174,8 +174,7 @@ router.get('/:id', async (req, res) => {
           WHEN i.discount_type = 'percent' THEN CONCAT(i.discount_value::text, '%')
           WHEN i.discount_type = 'nominal' THEN CONCAT('Rp. ', i.discount_value::text)
           ELSE '-' END AS discount,
-        i.total_after_discount AS total_invoice,
-        CASE WHEN i.status = 'paid' THEN 'Success' ELSE 'Pending' END AS payment_status
+        i.total_after_discount AS total_invoice
       FROM invoices i
       JOIN student_enrollments se ON se.id = i.student_enrollment_id
       JOIN students s ON se.student_id = s.id
